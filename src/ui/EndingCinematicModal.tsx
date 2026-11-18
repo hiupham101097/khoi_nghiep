@@ -70,23 +70,23 @@ export const EndingCinematicModal: React.FC<EndingCinematicModalProps> = ({ gsm 
   const currentText = ending.storyNarrative[Math.min(step, totalSteps - 1)];
 
   return (
-    <div className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-slate-900 border-2 border-slate-700 rounded-3xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn">
+      <div className="bg-slate-900 border-2 border-slate-700 rounded-3xl w-full max-w-3xl max-h-[92vh] shadow-2xl overflow-y-auto flex flex-col">
         
         {/* Banner tiêu đề kết thúc */}
         <div
-          className="p-6 text-center text-white border-b border-slate-800"
+          className="p-4 sm:p-6 text-center text-white border-b border-slate-800 shrink-0"
           style={{ backgroundColor: ending.bannerColor }}
         >
-          <span className="text-xs uppercase font-black tracking-widest bg-black/30 px-3 py-1 rounded-full">
+          <span className="text-[10px] sm:text-xs uppercase font-black tracking-widest bg-black/30 px-3 py-1 rounded-full">
             {ending.code}
           </span>
-          <h2 className="text-2xl font-black mt-2 tracking-wide">{ending.title}</h2>
-          <p className="text-sm font-medium opacity-90 mt-1">{ending.subtitle}</p>
+          <h2 className="text-lg sm:text-2xl font-black mt-2 tracking-wide">{ending.title}</h2>
+          <p className="text-xs sm:text-sm font-medium opacity-90 mt-1">{ending.subtitle}</p>
         </div>
 
         {/* Khung diễn tiến kịch bản điện ảnh */}
-        <div className="p-8 flex-1 flex flex-col justify-between space-y-6 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
+        <div className="p-4 sm:p-8 flex-1 flex flex-col justify-between space-y-4 sm:space-y-6 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900">
           <div className="space-y-4">
             <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
               <span>Diễn Biến Cốt Truyện</span>

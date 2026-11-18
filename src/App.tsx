@@ -16,6 +16,7 @@ import { DynamicEventModal } from './ui/DynamicEventModal';
 import { SaveMenuModal } from './ui/SaveMenuModal';
 import { EmployeeReviewModal } from './ui/EmployeeReviewModal';
 import { CollectivePetitionModal } from './ui/CollectivePetitionModal';
+import { VirtualControls } from './ui/VirtualControls';
 import { ENTERPRISE_STAGES } from './engine/economy/CompanyManager';
 import { soundManager } from './engine/core/SoundManager';
 
@@ -23,7 +24,18 @@ export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<WorldRenderer | null>(null);
   const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const viewportRef = useRef<{ cssWidth: number; cssHeight: number; dpr: number; zoom: number }>({
+    cssWidth: typeof window !== 'undefined' ? window.innerWidth : 1280,
+    cssHeight: typeof window !== 'undefined' ? window.innerHeight : 720,
+    dpr: 1,
+    zoom: 1
+  });
+
   const [isPetitionModalOpen, setIsPetitionModalOpen] = useState<boolean>(false);
+  const [showTouchControls, setShowTouchControls] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
+  });
 
   // Khởi tạo GameStateManager duy nhất
   const gsm = useMemo(() => new GameStateManager(), []);
@@ -42,10 +54,20 @@ export const App: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Tự động căn chỉnh kích thước Canvas toàn màn hình
+    // Tự động căn chỉnh kích thước Canvas chuẩn High-DPI & Retina
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const cssW = window.innerWidth;
+      const cssH = window.innerHeight;
+
+      canvas.width = Math.floor(cssW * dpr);
+      canvas.height = Math.floor(cssH * dpr);
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+
+      viewportRef.current.cssWidth = cssW;
+      viewportRef.current.cssHeight = cssH;
+      viewportRef.current.dpr = dpr;
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -65,13 +87,44 @@ export const App: React.FC = () => {
       // 1. Cập nhật logic game
       gsm.update(deltaTime);
 
-      // 2. Smooth Camera Lerp (Theo dõi nhân vật mượt mà, khử hoàn toàn hiện tượng giật)
+      // 2. Tính toán Adaptive Zoom & Tọa độ Camera mượt mà
+      const cssW = viewportRef.current.cssWidth;
+      const cssH = viewportRef.current.cssHeight;
+      const dpr = viewportRef.current.dpr;
       const scene = gsm.currentScene;
-      const maxCamX = Math.max(0, scene.width - canvas.width);
-      const maxCamY = Math.max(0, scene.height - canvas.height);
 
-      const targetCamX = Math.max(0, Math.min(gsm.playerController.pos.x - canvas.width / 2, maxCamX));
-      const targetCamY = Math.max(0, Math.min(gsm.playerController.pos.y - canvas.height / 2, maxCamY));
+      // Adaptive zoom chuẩn hóa cho mọi tỷ lệ màn hình (Desktop 2K/4K, 1080p, Laptop 720p/768p, Tablet, Mobile)
+      let targetZoom = 1.0;
+      if (cssW >= 1920) {
+        targetZoom = Math.min(1.5, Math.max(1.2, cssH / 650));
+      } else if (cssW >= 1280) {
+        targetZoom = Math.min(1.3, Math.max(1.05, cssH / 680));
+      } else if (cssW >= 768) {
+        targetZoom = Math.min(1.15, Math.max(0.95, cssW / 820));
+      } else {
+        targetZoom = Math.min(1.0, Math.max(0.78, cssW / 410));
+      }
+      viewportRef.current.zoom = targetZoom;
+
+      const viewWorldW = cssW / targetZoom;
+      const viewWorldH = cssH / targetZoom;
+
+      // Centering logic: Nếu màn hình lớn hơn bối cảnh (như phòng trọ 600x450), căn giữa hoàn hảo!
+      let targetCamX = 0;
+      if (viewWorldW >= scene.width) {
+        targetCamX = (scene.width - viewWorldW) / 2;
+      } else {
+        const maxCamX = scene.width - viewWorldW;
+        targetCamX = Math.max(0, Math.min(gsm.playerController.pos.x - viewWorldW / 2, maxCamX));
+      }
+
+      let targetCamY = 0;
+      if (viewWorldH >= scene.height) {
+        targetCamY = (scene.height - viewWorldH) / 2;
+      } else {
+        const maxCamY = scene.height - viewWorldH;
+        targetCamY = Math.max(0, Math.min(gsm.playerController.pos.y - viewWorldH / 2, maxCamY));
+      }
 
       cameraRef.current.x += (targetCamX - cameraRef.current.x) * Math.min(1, deltaTime * 8);
       cameraRef.current.y += (targetCamY - cameraRef.current.y) * Math.min(1, deltaTime * 8);
@@ -93,7 +146,11 @@ export const App: React.FC = () => {
         globalTick,
         gsm.floatingTexts,
         gsm.sprintStrategy,
-        stageLevel
+        stageLevel,
+        targetZoom,
+        dpr,
+        cssW,
+        cssH
       );
 
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -124,7 +181,7 @@ export const App: React.FC = () => {
     };
   }, [gsm]);
 
-  // Hỗ trợ chạm / click di chuyển cho chuột hoặc màn hình cảm ứng
+  // Hỗ trợ chạm / click di chuyển mượt mà chuẩn xác theo zoom
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -133,8 +190,9 @@ export const App: React.FC = () => {
     const clickScreenX = e.clientX - rect.left;
     const clickScreenY = e.clientY - rect.top;
 
-    const worldTargetX = clickScreenX + cameraRef.current.x;
-    const worldTargetY = clickScreenY + cameraRef.current.y;
+    const zoom = viewportRef.current.zoom || 1.0;
+    const worldTargetX = (clickScreenX / zoom) + cameraRef.current.x;
+    const worldTargetY = (clickScreenY / zoom) + cameraRef.current.y;
 
     // Kiểm tra tương tác click trực tiếp vào nhân viên trong văn phòng
     if (gsm.currentSceneId === 'OFFICE') {
@@ -152,7 +210,41 @@ export const App: React.FC = () => {
       }
     }
 
-    gsm.playerController.moveToTarget(worldTargetX, worldTargetY, gsm.currentScene);
+    // Thiết lập đích đến liên tục (Smooth Continuous Walk)
+    gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
+  };
+
+  const handleCanvasTouch = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const clickScreenX = touch.clientX - rect.left;
+      const clickScreenY = touch.clientY - rect.top;
+
+      const zoom = viewportRef.current.zoom || 1.0;
+      const worldTargetX = (clickScreenX / zoom) + cameraRef.current.x;
+      const worldTargetY = (clickScreenY / zoom) + cameraRef.current.y;
+
+      if (gsm.currentSceneId === 'OFFICE') {
+        const clickedEmp = gsm.employees.find((emp) => {
+          const posX = emp.currentPos ? emp.currentPos.x : 0;
+          const posY = emp.currentPos ? emp.currentPos.y : 0;
+          return Math.hypot(worldTargetX - posX, worldTargetY - posY) < 32;
+        });
+
+        if (clickedEmp) {
+          gsm.selectedEmployeeFor1on1 = clickedEmp;
+          soundManager.playClick();
+          gsm.notify();
+          return;
+        }
+      }
+
+      gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
+    }
   };
 
   return (
@@ -161,11 +253,23 @@ export const App: React.FC = () => {
       <canvas
         ref={canvasRef}
         onClick={handleCanvasClick}
+        onTouchStart={handleCanvasTouch}
+        style={{ touchAction: 'none' }}
         className="absolute inset-0 cursor-crosshair block"
       />
 
       {/* Heads-Up Display (HUD) */}
-      <HUD gsm={gsm} onOpenPetition={() => setIsPetitionModalOpen(true)} />
+      <HUD
+        gsm={gsm}
+        onOpenPetition={() => setIsPetitionModalOpen(true)}
+        showTouchControls={showTouchControls}
+        onToggleTouchControls={() => setShowTouchControls(!showTouchControls)}
+      />
+
+      {/* Điều Khiển Cảm Ứng Cho Mobile / Tablet */}
+      {showTouchControls && gsm.gamePhase === 'PLAYING' && (
+        <VirtualControls gsm={gsm} />
+      )}
 
       {/* 1. Kịch bản Mở đầu 500 triệu */}
       {gsm.gamePhase === 'INTRO_CINEMATIC' && <IntroCinematicModal gsm={gsm} />}

@@ -47,56 +47,56 @@ export const IntroCinematicModal: React.FC<IntroCinematicModalProps> = ({ gsm })
   const currentDialogue = dialogueScript[Math.min(currentStep, dialogueScript.length - 1)];
 
   return (
-    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center p-4 z-50">
-      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-500/50 rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-lg flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-amber-500/50 rounded-2xl w-full max-w-4xl max-h-[95vh] shadow-2xl overflow-y-auto flex flex-col">
         
         {/* Banner tiêu đề điện ảnh */}
-        <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 border-b border-amber-500/30 px-6 py-3 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 border-b border-amber-500/30 px-4 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-xl">🎬</span>
-            <span className="text-xs uppercase font-extrabold tracking-widest text-amber-400">
+            <span className="text-[11px] sm:text-xs uppercase font-extrabold tracking-widest text-amber-400">
               Kịch Bản Mở Đầu: Cuộc Gặp Định Mệnh 500 Triệu
             </span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">Dinh Thự Vinh Phát • 20:00</span>
+          <span className="text-[10px] sm:text-xs text-slate-400 font-mono">Dinh Thự Vinh Phát • 20:00</span>
         </div>
 
         {/* Khung cảnh diễn biến Chibi 2D Cinematic */}
-        <div className="relative h-64 bg-slate-950 flex items-center justify-center border-b border-slate-800 overflow-hidden">
+        <div className="relative h-44 sm:h-60 bg-slate-950 flex items-center justify-center border-b border-slate-800 overflow-hidden shrink-0">
           {/* Background ánh sáng sang trọng */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.15)_0,transparent_70%)]" />
           
-          <div className="relative flex items-center justify-around w-full max-w-2xl px-8">
+          <div className="relative flex items-center justify-around w-full max-w-2xl px-4 sm:px-8">
             {/* Chân dung Nam (Nhân vật chính) */}
             <div className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-b from-sky-600 to-blue-900 border-2 border-sky-400 flex items-center justify-center text-5xl shadow-xl shadow-sky-500/20">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-b from-sky-600 to-blue-900 border-2 border-sky-400 flex items-center justify-center text-3xl sm:text-5xl shadow-xl shadow-sky-500/20">
                 🧑‍🎓
               </div>
-              <span className="text-xs font-bold text-sky-300 mt-2">Bạn (Thành Nam, 22 tuổi)</span>
-              <span className="text-[10px] text-slate-400">Sinh viên nghèo mới ra trường</span>
+              <span className="text-[11px] sm:text-xs font-bold text-sky-300 mt-1.5 sm:mt-2 text-center">Bạn (Thành Nam, 22 tuổi)</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">Sinh viên nghèo mới ra trường</span>
             </div>
 
             {/* Chiếc vali 500 triệu tỏa sáng */}
             <div className="flex flex-col items-center animate-bounce">
-              <div className="w-20 h-16 bg-gradient-to-b from-amber-600 to-yellow-800 border-2 border-yellow-400 rounded-lg shadow-2xl shadow-yellow-500/40 flex flex-col items-center justify-center text-2xl">
+              <div className="w-14 h-12 sm:w-20 sm:h-16 bg-gradient-to-b from-amber-600 to-yellow-800 border-2 border-yellow-400 rounded-lg shadow-2xl shadow-yellow-500/40 flex flex-col items-center justify-center text-xl sm:text-2xl">
                 💼
               </div>
-              <span className="text-xs font-extrabold text-amber-300 mt-1 font-mono">500.000.000 đ</span>
+              <span className="text-[10px] sm:text-xs font-extrabold text-amber-300 mt-1 font-mono">500.000.000 đ</span>
             </div>
 
             {/* Chân dung Ông Vinh */}
             <div className="flex flex-col items-center">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-900 border-2 border-amber-400 flex items-center justify-center text-5xl shadow-xl shadow-amber-500/20">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-b from-slate-700 to-slate-900 border-2 border-amber-400 flex items-center justify-center text-3xl sm:text-5xl shadow-xl shadow-amber-500/20">
                 👨‍💼
               </div>
-              <span className="text-xs font-bold text-amber-300 mt-2">Ông Hoàng Thế Vinh</span>
-              <span className="text-[10px] text-slate-400">Chủ tịch Tập đoàn Vinh Phát</span>
+              <span className="text-[11px] sm:text-xs font-bold text-amber-300 mt-1.5 sm:mt-2 text-center">Ông Hoàng Thế Vinh</span>
+              <span className="text-[9px] sm:text-[10px] text-slate-400 hidden sm:block">Chủ tịch Vinh Phát Group</span>
             </div>
           </div>
         </div>
 
         {/* Khung Hội thoại & Chân dung Biểu Cảm Lớn */}
-        <div className="p-6 bg-slate-900/90 flex flex-col gap-4">
+        <div className="p-4 sm:p-6 bg-slate-900/90 flex flex-col gap-4">
           <div className="flex items-start gap-4">
             <div className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-3xl shrink-0 shadow-inner">
               {currentDialogue.avatar}

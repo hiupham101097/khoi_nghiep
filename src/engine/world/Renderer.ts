@@ -56,7 +56,7 @@ export class WorldRenderer {
     }
   }
 
-  // Camera offset
+  // Camera offset & Viewport Responsive
   public renderFrame(
     scene: MapSceneConfig,
     camera: Position2D,
@@ -68,16 +68,25 @@ export class WorldRenderer {
     tick: number,
     floatingTexts: FloatingText[] = [],
     sprintStrategy: string = 'BALANCED',
-    stageLevel: number = 1
+    stageLevel: number = 1,
+    zoom: number = 1.0,
+    dpr: number = 1.0,
+    cssWidth: number = 800,
+    cssHeight: number = 600
   ) {
     const ctx = this.ctx;
-    const width = this.canvas.width;
-    const height = this.canvas.height;
 
-    ctx.clearRect(0, 0, width, height);
+    // Reset transform theo devicePixelRatio để nét căng tuyệt đối
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Xóa toàn bộ viewport và phủ nền đen sẫm sang trọng
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(0, 0, cssWidth, cssHeight);
 
     ctx.save();
-    // Dịch chuyển camera theo góc nhìn nhân vật chính
+    // Áp dụng scale zoom và dịch chuyển camera
+    ctx.scale(zoom, zoom);
     ctx.translate(-camera.x, -camera.y);
 
     // LỚP 0 & 1: Vẽ sàn / đường phố / nền bối cảnh
@@ -116,11 +125,16 @@ export class WorldRenderer {
       this.renderFloatingTexts(floatingTexts);
     }
 
+    // Viền khung bối cảnh diorama cao cấp
+    ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(0, 0, scene.width, scene.height);
+
     ctx.restore();
 
-    // LỚP 8: Floating Action Prompt trên màn hình nếu có
+    // LỚP 8: Floating Action Prompt trên màn hình nếu có (tọa độ CSS)
     if (activePrompt) {
-      this.renderScreenPrompt(activePrompt, width, height);
+      this.renderScreenPrompt(activePrompt, cssWidth, cssHeight, dpr);
     }
   }
 
@@ -939,19 +953,20 @@ export class WorldRenderer {
   }
 
   // Hiển thị lời nhắc tương tác chính giữa đáy màn hình
-  private renderScreenPrompt(promptText: string, screenWidth: number, screenHeight: number) {
+  private renderScreenPrompt(promptText: string, screenWidth: number, screenHeight: number, dpr: number = 1.0) {
     const ctx = this.ctx;
     ctx.save();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     ctx.font = 'bold 13px sans-serif';
     const textWidth = ctx.measureText(promptText).width;
-    const boxWidth = textWidth + 36;
+    const boxWidth = Math.min(screenWidth - 32, textWidth + 36);
     const boxHeight = 36;
     const boxX = (screenWidth - boxWidth) / 2;
-    const boxY = screenHeight - 60;
+    const boxY = screenHeight - (screenWidth < 768 ? 96 : 60);
 
     // Nền hộp thông điệp mờ cao cấp
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
     ctx.beginPath();
     ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 8);
     ctx.fill();

@@ -36,34 +36,34 @@ export const ProjectTenderModal: React.FC<ProjectTenderModalProps> = ({ gsm, onC
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-800 px-6 py-4 flex items-center justify-between border-b border-slate-700">
+        <div className="bg-slate-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-700">
           <div>
-            <h3 className="font-bold text-slate-100 text-base">Bảng Chào Thầu Dự Án Công Nghệ</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="font-bold text-slate-100 text-sm sm:text-base">Bảng Chào Thầu Dự Án Công Nghệ</h3>
+            <p className="text-[11px] sm:text-xs text-slate-400">
               Nhận tạm ứng 30% giá trị hợp đồng khi ký kết • Quyết toán 70% còn lại khi nghiệm thu đạt chuẩn
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Danh sách dự án chào thầu */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto space-y-4">
           {tenders.map((tender) => {
             const isAlreadyActive = gsm.activeProjects.some((p) => p.name === tender.name);
 
             return (
-              <div key={tender.id} className="bg-slate-800/80 border border-slate-700 p-5 rounded-xl space-y-3">
-                <div className="flex items-start justify-between">
+              <div key={tender.id} className="bg-slate-800/80 border border-slate-700 p-4 sm:p-5 rounded-xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <span className="text-3xl">{tender.clientLogo}</span>
+                    <span className="text-3xl shrink-0">{tender.clientLogo}</span>
                     <div>
-                      <h4 className="font-bold text-slate-100 text-sm flex items-center gap-2">
+                      <h4 className="font-bold text-slate-100 text-sm flex items-center gap-2 flex-wrap">
                         {tender.name}
                         <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-600/40 px-2 py-0.5 rounded font-mono">
                           {tender.clientType}
@@ -73,9 +73,9 @@ export const ProjectTenderModal: React.FC<ProjectTenderModalProps> = ({ gsm, onC
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-xs text-slate-400 block">Tổng giá trị hợp đồng:</span>
-                    <span className="text-base font-bold text-emerald-400 font-mono">
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block">Tổng giá trị hợp đồng:</span>
+                    <span className="text-sm sm:text-base font-bold text-emerald-400 font-mono">
                       {tender.contractValue.toLocaleString('vi-VN')} đ
                     </span>
                     <span className="text-[10px] text-sky-400 block">
@@ -88,7 +88,7 @@ export const ProjectTenderModal: React.FC<ProjectTenderModalProps> = ({ gsm, onC
                   {tender.description}
                 </p>
 
-                <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 text-xs text-slate-400">
                   <div>
                     <span>Thời hạn bàn giao:</span>
                     <p className="font-bold text-amber-300 font-mono flex items-center gap-1">

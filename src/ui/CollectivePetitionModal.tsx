@@ -19,29 +19,29 @@ export const CollectivePetitionModal: React.FC<CollectivePetitionModalProps> = (
   const canAffordCompromise = gsm.playerStats.cash >= totalBonusCompromise;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn select-none">
-      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn select-none">
+      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header Khẩn Cấp */}
-        <div className="bg-gradient-to-r from-amber-950 to-slate-900 border-b border-amber-500/40 px-6 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-amber-950 to-slate-900 border-b border-amber-500/40 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500 flex items-center justify-center text-amber-400 shrink-0">
               <AlertTriangle className="w-6 h-6 animate-pulse" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-amber-300 uppercase tracking-wide">
+              <h2 className="text-sm sm:text-base font-bold text-amber-300 uppercase tracking-wide">
                 Đơn Kiến Nghị Tập Thể Của Nhân Viên
               </h2>
-              <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
-                <Clock className="w-3.5 h-3.5 text-rose-400" />
-                <span>Thời hạn giải quyết: <strong className="text-rose-400 font-mono">{petition.daysRemaining} ngày</strong> (Sau đó sẽ phát động bãi công)</span>
+              <p className="text-[11px] sm:text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                <Clock className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <span>Thời hạn: <strong className="text-rose-400 font-mono">{petition.daysRemaining} ngày</strong> (Sau đó sẽ phát động bãi công)</span>
               </p>
             </div>
           </div>
         </div>
 
         {/* Nội dung thông điệp & Danh sách nhân viên ký tên */}
-        <div className="p-6 space-y-4 text-slate-200 text-sm">
+        <div className="p-4 sm:p-6 space-y-4 text-slate-200 text-sm overflow-y-auto">
           <div className="bg-slate-950/70 border border-slate-800 p-3.5 rounded-xl text-xs leading-relaxed text-slate-300">
             <p className="italic text-amber-200 mb-2">"{petition.message}"</p>
             <div className="text-[11px] text-slate-400 pt-2 border-t border-slate-800 flex items-center gap-2">

@@ -62,35 +62,35 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-slate-900 border-2 border-sky-500/80 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn">
+      <div className="bg-slate-900 border-2 border-sky-500/80 rounded-2xl w-full max-w-xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Header */}
-        <div className="bg-slate-800 px-6 py-4 flex items-center justify-between border-b border-slate-700">
+        <div className="bg-slate-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-700 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-2xl">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-xl sm:text-2xl shrink-0">
               {employee.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
             </div>
             <div>
-              <h3 className="font-bold text-slate-100 text-base flex items-center gap-2">
+              <h3 className="font-bold text-slate-100 text-sm sm:text-base flex items-center gap-2 flex-wrap">
                 {employee.name}
                 <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-600/40 px-2 py-0.5 rounded font-mono">
                   {employee.role} • {employee.level}
                 </span>
               </h3>
-              <p className="text-xs text-slate-400">Đối thoại 1-1 & Đánh giá hiệu suất nhân sự</p>
+              <p className="text-[11px] sm:text-xs text-slate-400">Đối thoại 1-1 & Đánh giá hiệu suất nhân sự</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700 transition">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-700 transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Thân Modal */}
-        <div className="p-6 space-y-5 text-slate-200">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5 text-slate-200 overflow-y-auto">
           {/* Trạng thái tâm lý & Cảnh báo */}
           {employee.isStriking && (
-            <div className="bg-rose-950/80 border border-rose-500 text-rose-300 p-3 rounded-xl text-xs font-semibold flex items-center justify-between">
+            <div className="bg-rose-950/80 border border-rose-500 text-rose-300 p-3 rounded-xl text-xs font-semibold flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-400 animate-bounce" />
                 <span>Nhân viên này đang tham gia ĐÌNH CÔNG tại văn phòng!</span>
@@ -109,7 +109,7 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
           )}
 
           {/* Các chỉ số */}
-          <div className="grid grid-cols-2 gap-4 text-xs bg-slate-800/60 p-4 rounded-xl border border-slate-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs bg-slate-800/60 p-3.5 sm:p-4 rounded-xl border border-slate-700">
             <div>
               <span className="text-slate-400">Lương hiện tại:</span>
               <p className="font-mono font-bold text-emerald-400 text-sm">
@@ -128,8 +128,8 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
               <span className="text-[10px] text-amber-400">Tỷ lệ bug: {employee.bugRate}%</span>
             </div>
 
-            <div className="col-span-2 space-y-2 pt-2 border-t border-slate-700/60">
-              <div className="flex justify-between">
+            <div className="col-span-1 sm:col-span-2 space-y-2 pt-2 border-t border-slate-700/60">
+              <div className="flex justify-between flex-wrap gap-1 text-[11px]">
                 <span>Năng lượng: {Math.round(employee.energy)}%</span>
                 <span className="text-rose-400">Bất mãn: {Math.round(employee.resentment)}%</span>
                 <span className="text-purple-400">Căng thẳng: {Math.round(employee.stress)}%</span>
@@ -157,7 +157,7 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
           {/* Các hành động CEO có thể thực hiện */}
           <div className="space-y-2 pt-2 border-t border-slate-700">
             <span className="text-xs font-bold text-slate-300">Quyết định của CEO:</span>
-            <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold">
               <button
                 onClick={() => handleBonus(2000000)}
                 className="bg-emerald-600 hover:bg-emerald-500 text-white p-2.5 rounded-xl flex items-center justify-center gap-1.5 transition cursor-pointer"

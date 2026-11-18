@@ -11,13 +11,18 @@ export class PlayerController {
   public dir: CharacterDirection = 'DOWN';
   public state: CharacterAnimationState = 'IDLE';
 
-  public baseSpeed: number = 160; // Pixels per second
+  public baseSpeed: number = 175; // Pixels per second
   public isRunning: boolean = false;
   
   private keys: Record<string, boolean> = {};
   public nearbyZone: InteractiveZone | null = null;
 
+  // Hỗ trợ điều khiển cảm ứng / click-to-move liên tục
+  public targetDestination: Position2D | null = null;
+  public virtualInput: { dx: number; dy: number; isRunning: boolean } | null = null;
+
   private stepTimer: number = 0;
+  private stuckTimer: number = 0;
 
   constructor(initialPos?: Position2D) {
     if (initialPos) {
@@ -42,6 +47,35 @@ export class PlayerController {
     });
   }
 
+  public setTargetDestination(x: number, y: number) {
+    this.targetDestination = { x, y };
+    this.stuckTimer = 0;
+  }
+
+  public clearTargetDestination() {
+    this.targetDestination = null;
+    this.stuckTimer = 0;
+    if (this.state === 'WALK') {
+      this.state = 'IDLE';
+    }
+  }
+
+  public setVirtualInput(dx: number, dy: number, isRunning: boolean = false) {
+    this.virtualInput = { dx, dy, isRunning };
+    if (dx !== 0 || dy !== 0) {
+      this.targetDestination = null;
+    }
+  }
+
+  public triggerInteract(onInteract?: (zone: InteractiveZone) => void) {
+    if (this.nearbyZone) {
+      soundManager.playClick();
+      if (onInteract) {
+        onInteract(this.nearbyZone);
+      }
+    }
+  }
+
   public update(deltaTime: number, currentScene: MapSceneConfig, onInteract?: (zone: InteractiveZone) => void) {
     let dx = 0;
     let dy = 0;
@@ -50,18 +84,43 @@ export class PlayerController {
     const down = this.keys['s'] || this.keys['arrowdown'];
     const left = this.keys['a'] || this.keys['arrowleft'];
     const right = this.keys['d'] || this.keys['arrowright'];
-    this.isRunning = !!this.keys['shift'];
+    const keyRunning = !!this.keys['shift'];
 
     if (up) dy -= 1;
     if (down) dy += 1;
     if (left) dx -= 1;
     if (right) dx += 1;
 
-    // Chuẩn hóa vector di chuyển chéo
-    if (dx !== 0 && dy !== 0) {
-      const invLen = 1 / Math.SQRT2;
-      dx *= invLen;
-      dy *= invLen;
+    // 1. Nếu có phím bàn phím: Ưu tiên bàn phím và xóa đích click
+    if (dx !== 0 || dy !== 0) {
+      this.targetDestination = null;
+      this.isRunning = keyRunning;
+
+      // Chuẩn hóa vector di chuyển chéo
+      if (dx !== 0 && dy !== 0) {
+        const invLen = 1 / Math.SQRT2;
+        dx *= invLen;
+        dy *= invLen;
+      }
+    } else if (this.virtualInput && (this.virtualInput.dx !== 0 || this.virtualInput.dy !== 0)) {
+      // 2. Nếu có Virtual D-Pad (Cảm ứng Mobile/Tablet)
+      this.targetDestination = null;
+      dx = this.virtualInput.dx;
+      dy = this.virtualInput.dy;
+      this.isRunning = this.virtualInput.isRunning;
+    } else if (this.targetDestination) {
+      // 3. Nếu đang tự hành tới tọa độ đã click (Click-to-Move / Tap-to-Move)
+      const toX = this.targetDestination.x - this.pos.x;
+      const toY = this.targetDestination.y - this.pos.y;
+      const dist = Math.hypot(toX, toY);
+
+      if (dist < 6) {
+        this.clearTargetDestination();
+      } else {
+        dx = toX / dist;
+        dy = toY / dist;
+        this.isRunning = dist > 180; // Tự động chạy nhanh nếu khoảng cách xa
+      }
     }
 
     const currentSpeed = (this.isRunning ? this.baseSpeed * 1.5 : this.baseSpeed) * deltaTime;
@@ -76,16 +135,32 @@ export class PlayerController {
         this.dir = dy > 0 ? 'DOWN' : 'UP';
       }
 
+      let moved = false;
+
       // Kiểm tra va chạm trục X
       const nextX = this.pos.x + dx * currentSpeed;
       if (!this.checkCollision(nextX, this.pos.y, currentScene.colliders, currentScene.width, currentScene.height)) {
         this.pos.x = nextX;
+        moved = true;
       }
 
       // Kiểm tra va chạm trục Y
       const nextY = this.pos.y + dy * currentSpeed;
       if (!this.checkCollision(this.pos.x, nextY, currentScene.colliders, currentScene.width, currentScene.height)) {
         this.pos.y = nextY;
+        moved = true;
+      }
+
+      // Nếu đang click-to-move mà bị kẹt vật cản quá 0.25 giây -> tự động hủy để không bị giật
+      if (this.targetDestination) {
+        if (!moved) {
+          this.stuckTimer += deltaTime;
+          if (this.stuckTimer > 0.25) {
+            this.clearTargetDestination();
+          }
+        } else {
+          this.stuckTimer = 0;
+        }
       }
 
       // Phát âm thanh bước chân

@@ -100,11 +100,11 @@ export const DynamicEventModal: React.FC<DynamicEventModalProps> = ({ gsm, event
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn">
+      <div className="bg-slate-900 border-2 border-amber-500/80 rounded-2xl w-full max-w-xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
         
         {/* Banner */}
-        <div className="bg-amber-950 border-b border-amber-600/40 p-4 flex items-center gap-3">
+        <div className="bg-amber-950 border-b border-amber-600/40 p-3.5 sm:p-4 flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-full bg-amber-600 flex items-center justify-center text-white shrink-0">
             <AlertCircle className="w-5 h-5" />
           </div>
@@ -112,12 +112,12 @@ export const DynamicEventModal: React.FC<DynamicEventModalProps> = ({ gsm, event
             <span className="text-[10px] text-amber-300 font-extrabold uppercase tracking-wider block">
               SỰ KIỆN ĐỘNG • {event.category}
             </span>
-            <h3 className="font-bold text-slate-100 text-sm">{event.title}</h3>
+            <h3 className="font-bold text-slate-100 text-sm sm:text-base">{event.title}</h3>
           </div>
         </div>
 
         {/* Nội dung tình huống */}
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           <p className="text-xs text-slate-200 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800">
             {event.description}
           </p>

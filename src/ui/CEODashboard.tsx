@@ -59,99 +59,112 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
   const nextStage = allStages.find((s) => s.level === stageData.level + 1) || null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-5xl h-[88vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-5xl h-[92vh] sm:h-[88vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header Dashboard */}
-        <div className="bg-slate-800/90 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md">
-              CEO
+        <div className="bg-slate-800/95 border-b border-slate-700 px-4 sm:px-6 py-3 sm:py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center justify-between w-full lg:w-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white font-black text-base sm:text-lg shadow-md shrink-0">
+                CEO
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+                  <span className="truncate max-w-[160px] sm:max-w-xs">{gsm.companyName}</span>
+                  <span className="text-[10px] sm:text-xs font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-1.5 sm:px-2 py-0.5 rounded-full shrink-0">
+                    MST: {gsm.taxCode}
+                  </span>
+                </h2>
+                <p className="text-[11px] sm:text-xs text-slate-400 truncate">Hệ thống Quản trị & Điều hành Doanh nghiệp Công nghệ</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                <span>{gsm.companyName}</span>
-                <span className="text-xs font-normal text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                  MST: {gsm.taxCode}
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">Hệ thống Quản trị & Điều hành Doanh nghiệp Công nghệ</p>
-            </div>
+
+            {/* Mobile close button */}
+            <button
+              onClick={onClose}
+              className="lg:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700/60 transition cursor-pointer shrink-0"
+              title="Đóng bảng điều khiển"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex items-center gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800">
+          {/* Tab Navigation (Responsive Horizontal Scroll) */}
+          <div className="flex items-center gap-1.5 bg-slate-950/60 p-1 rounded-xl border border-slate-800 overflow-x-auto max-w-full scrollbar-none shrink-0">
             <button
               onClick={() => setActiveTab('OVERVIEW')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'OVERVIEW' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
               <span>Tổng Quan</span>
             </button>
 
             <button
               onClick={() => setActiveTab('HR')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'HR' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Users className="w-3.5 h-3.5" />
+              <Users className="w-3.5 h-3.5 shrink-0" />
               <span>Nhân Sự ({gsm.employees.length})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('PROJECTS')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'PROJECTS' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <FolderGit2 className="w-3.5 h-3.5" />
+              <FolderGit2 className="w-3.5 h-3.5 shrink-0" />
               <span>Dự Án ({gsm.activeProjects.length})</span>
             </button>
 
             <button
               onClick={() => setActiveTab('FINANCE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'FINANCE' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <TrendingUp className="w-3.5 h-3.5" />
+              <TrendingUp className="w-3.5 h-3.5 shrink-0" />
               <span>Tài Chính</span>
             </button>
 
             <button
               onClick={() => setActiveTab('OFFICE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'OFFICE' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Building2 className="w-3.5 h-3.5" />
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
               <span>Văn Phòng</span>
             </button>
 
             <button
               onClick={() => setActiveTab('LEGAL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer whitespace-nowrap shrink-0 ${
                 activeTab === 'LEGAL' ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Scale className="w-3.5 h-3.5" />
+              <Scale className="w-3.5 h-3.5 shrink-0" />
               <span>Pháp Lý & Lan Anh</span>
             </button>
           </div>
 
+          {/* Desktop close button */}
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition cursor-pointer"
+            className="hidden lg:flex text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition cursor-pointer shrink-0"
+            title="Đóng bảng điều khiển"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Nội dung từng Tab */}
-        <div className="flex-1 p-6 overflow-y-auto text-slate-200 space-y-6">
+        <div className="flex-1 p-4 sm:p-6 overflow-y-auto text-slate-200 space-y-6">
           
           {/* TAB 1: TỔNG QUAN */}
           {activeTab === 'OVERVIEW' && (
@@ -787,8 +800,8 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                 {gsm.financialStatements.length === 0 ? (
                   <p className="text-xs text-slate-500 italic">Chưa kết thúc tháng đầu tiên. Báo cáo tài chính sẽ được chốt vào ngày 30.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs border border-slate-700">
+                  <div className="overflow-x-auto rounded-lg border border-slate-700">
+                    <table className="min-w-[580px] w-full text-left text-xs">
                       <thead className="bg-slate-800 text-slate-300">
                         <tr>
                           <th className="p-2 border-b border-slate-700">Kỳ</th>

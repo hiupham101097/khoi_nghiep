@@ -41,27 +41,27 @@ export const BankModal: React.FC<BankModalProps> = ({ gsm, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="bg-emerald-950 border-b border-emerald-600/40 px-6 py-4 flex items-center justify-between">
+        <div className="bg-emerald-950 border-b border-emerald-600/40 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-700 flex items-center justify-center text-white">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-700 flex items-center justify-center text-white shrink-0">
               <Building className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-slate-100 text-base">Ngân Hàng Thương Mại V-Bank</h3>
-              <p className="text-xs text-emerald-300">Gói Tín Dụng Khởi Nghiệp Công Nghệ • Lãi suất ưu đãi 12%/năm</p>
+              <h3 className="font-bold text-slate-100 text-sm sm:text-base">Ngân Hàng Thương Mại V-Bank</h3>
+              <p className="text-[11px] sm:text-xs text-emerald-300">Gói Tín Dụng Khởi Nghiệp Công Nghệ • Lãi suất 12%/năm</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Nội dung vay vốn */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-6">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto space-y-6">
           <div className="space-y-3">
             <h4 className="font-bold text-slate-100 text-sm">Đăng Ký Khoản Vay Mới</h4>
             

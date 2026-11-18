@@ -44,7 +44,7 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
 
     gsm.playerStats.cash -= 3000000;
 
-    gsm.employees.push({
+    const newEmp = {
       id: candidate.id,
       name: candidate.name,
       avatarSeed: candidate.avatarSeed,
@@ -64,14 +64,16 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
       loyalty: 75,
       ceoTrust: 75,
       ambition: candidate.ambition,
-      currentState: 'WORK',
+      currentState: 'WORK' as const,
       deskIndex: gsm.employees.length,
       assignedProjectId: null,
       isStriking: false,
       hasGivenNotice: false,
       daysUntilQuit: 0,
       memoryLog: [`Gia nhập công ty với mức lương ${offered.toLocaleString('vi-VN')} VNĐ/tháng.`]
-    });
+    };
+    EmployeeAIEngine.initAI2Fields(newEmp);
+    gsm.employees.push(newEmp);
 
     gsm.decisionLog.push(`Tuyển dụng thành công: ${candidate.name} (${candidate.role})`);
     soundManager.playSuccess();
@@ -80,37 +82,37 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-800 px-6 py-4 flex items-center justify-between border-b border-slate-700">
+        <div className="bg-slate-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-700">
           <div>
-            <h3 className="font-bold text-slate-100 text-base">Sàn Tuyển Dụng & Phỏng Vấn Ứng Viên IT</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="font-bold text-slate-100 text-sm sm:text-base">Sàn Tuyển Dụng & Phỏng Vấn IT</h3>
+            <p className="text-[11px] sm:text-xs text-slate-400">
               Văn phòng: {gsm.employees.length}/{currentOffice.maxDesks} chỗ ngồi • Phí tuyển dụng: 3.000.000 VNĐ/người
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-700 transition cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Danh sách ứng viên */}
-        <div className="flex-1 p-6 overflow-y-auto space-y-4">
+        <div className="flex-1 p-3 sm:p-6 overflow-y-auto space-y-4">
           {candidates.map((cand) => {
             const isAlreadyHired = gsm.employees.some((e) => e.id === cand.id);
             const currentOffer = offeredSalaries[cand.id] ?? cand.expectedSalary;
 
             return (
-              <div key={cand.id} className="bg-slate-800/80 border border-slate-700 p-5 rounded-xl space-y-3">
-                <div className="flex items-start justify-between">
+              <div key={cand.id} className="bg-slate-800/80 border border-slate-700 p-4 sm:p-5 rounded-xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-2xl">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-xl sm:text-2xl shrink-0">
                       {cand.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
                     </div>
                     <div>
-                      <h4 className="font-bold text-slate-100 flex items-center gap-2">
+                      <h4 className="font-bold text-slate-100 flex items-center gap-2 flex-wrap text-sm sm:text-base">
                         {cand.name}
                         <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-600/40 px-2 py-0.5 rounded font-mono">
                           {cand.role} • {cand.level} ({cand.experienceYears} năm KN)
@@ -120,34 +122,34 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-xs text-slate-400 block">Kỳ vọng lương:</span>
-                    <span className="text-sm font-bold text-emerald-400 font-mono">
+                  <div className="text-left sm:text-right shrink-0">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block">Kỳ vọng lương:</span>
+                    <span className="text-xs sm:text-sm font-bold text-emerald-400 font-mono">
                       {cand.expectedSalary.toLocaleString('vi-VN')} đ/tháng
                     </span>
                   </div>
                 </div>
 
                 {/* Các chỉ số kỹ năng */}
-                <div className="grid grid-cols-3 gap-3 text-xs bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
+                <div className="grid grid-cols-3 gap-2 sm:gap-3 text-xs bg-slate-900/60 p-2.5 rounded-lg border border-slate-800">
                   <div>
-                    <span className="text-slate-400">Tốc độ code:</span>
+                    <span className="text-slate-400 text-[11px]">Tốc độ:</span>
                     <p className="font-bold text-sky-300 font-mono">{cand.speed}/100</p>
                   </div>
                   <div>
-                    <span className="text-slate-400">Chất lượng:</span>
+                    <span className="text-slate-400 text-[11px]">Chất lượng:</span>
                     <p className="font-bold text-emerald-400 font-mono">{cand.quality}/100</p>
                   </div>
                   <div>
-                    <span className="text-slate-400">Tỷ lệ sinh lỗi:</span>
+                    <span className="text-slate-400 text-[11px]">Tỷ lệ lỗi:</span>
                     <p className="font-bold text-amber-400 font-mono">{cand.bugRate}%</p>
                   </div>
                 </div>
 
                 {/* Đàm phán lương & Nút tuyển dụng */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-700/60">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-300">Mức lương đề xuất:</span>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between pt-2 border-t border-slate-700/60 gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-slate-300">Lương đề xuất:</span>
                     <input
                       type="number"
                       step={1000000}
@@ -156,22 +158,22 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
                         const val = parseInt(e.target.value) || 0;
                         setOfferedSalaries({ ...offeredSalaries, [cand.id]: val });
                       }}
-                      className="bg-slate-900 border border-slate-700 px-3 py-1 rounded text-xs text-emerald-400 font-mono font-bold w-36"
+                      className="bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-xs text-emerald-400 font-mono font-bold w-32 sm:w-36"
                     />
                     <span className="text-[10px] text-slate-400">
-                      {currentOffer < cand.expectedSalary ? '⚠️ Ép lương có thể gây bất mãn ban đầu' : '✅ Đạt kỳ vọng'}
+                      {currentOffer < cand.expectedSalary ? '⚠️ Ép lương có thể gây bất mãn' : '✅ Đạt kỳ vọng'}
                     </span>
                   </div>
 
                   {isAlreadyHired ? (
-                    <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1.5 rounded flex items-center gap-1">
+                    <span className="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1.5 rounded flex items-center justify-center gap-1">
                       <CheckCircle className="w-3.5 h-3.5" /> Đã Tuyển
                     </span>
                   ) : (
                     <button
                       onClick={() => handleHire(cand)}
                       disabled={isOfficeFull}
-                      className="bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-lg transition cursor-pointer"
+                      className="bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-bold text-xs px-4 py-2 rounded-lg transition cursor-pointer text-center"
                     >
                       Ký Hợp Đồng Tuyển Dụng
                     </button>
