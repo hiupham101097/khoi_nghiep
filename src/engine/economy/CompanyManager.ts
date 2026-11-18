@@ -89,21 +89,60 @@ export class CompanyGrowthEngine {
   public static evaluateStage(
     valuation: number,
     completedProjects: number,
-    headcount: number
+    headcount: number,
+    reputation: number = 0,
+    cash: number = 0
   ): EnterpriseStageId {
-    if (valuation >= 25000000000 && completedProjects >= 18 && headcount >= 15) {
+    if (valuation >= 25000000000 && completedProjects >= 18 && headcount >= 12 && reputation >= 80) {
       return 'STAGE_5_CONGLOMERATE';
     }
-    if (valuation >= 10000000000 && completedProjects >= 10 && headcount >= 8) {
+    if (valuation >= 10000000000 && completedProjects >= 10 && headcount >= 7 && reputation >= 55) {
       return 'STAGE_4_ENTERPRISE';
     }
-    if (valuation >= 3000000000 && completedProjects >= 5 && headcount >= 5) {
+    if (valuation >= 3000000000 && completedProjects >= 5 && headcount >= 4 && reputation >= 30) {
       return 'STAGE_3_SCALING';
     }
     if (valuation >= 1000000000 && completedProjects >= 2 && headcount >= 2) {
       return 'STAGE_2_STARTUP';
     }
     return 'STAGE_1_BOOTSTRAP';
+  }
+
+  public static checkStageRequirements(
+    targetStageId: EnterpriseStageId,
+    valuation: number,
+    completedProjects: number,
+    headcount: number,
+    reputation: number,
+    cash: number
+  ): { isEligible: boolean; missingList: string[] } {
+    const stage = ENTERPRISE_STAGES[targetStageId];
+    const missingList: string[] = [];
+
+    if (valuation < stage.requiredValuation) {
+      missingList.push(`Định giá cần đạt tối thiểu ${stage.requiredValuation.toLocaleString('vi-VN')} VNĐ (Hiện có: ${valuation.toLocaleString('vi-VN')} đ)`);
+    }
+    if (completedProjects < stage.requiredCompletedProjects) {
+      missingList.push(`Cần hoàn thành tối thiểu ${stage.requiredCompletedProjects} hợp đồng dự án (Hiện có: ${completedProjects})`);
+    }
+    if (headcount < stage.requiredHeadcount) {
+      missingList.push(`Quy mô nhân sự cần tối thiểu ${stage.requiredHeadcount} người (Hiện có: ${headcount} người)`);
+    }
+
+    if (stage.level >= 3 && reputation < 30) {
+      missingList.push(`Uy tín thương trường cần đạt tối thiểu 30 điểm (Hiện có: ${reputation})`);
+    }
+    if (stage.level >= 4 && reputation < 55) {
+      missingList.push(`Uy tín thương trường cần đạt tối thiểu 55 điểm (Hiện có: ${reputation})`);
+    }
+    if (stage.level >= 5 && reputation < 80) {
+      missingList.push(`Uy tín thương trường cần đạt tối thiểu 80 điểm (Hiện có: ${reputation})`);
+    }
+
+    return {
+      isEligible: missingList.length === 0,
+      missingList
+    };
   }
 }
 

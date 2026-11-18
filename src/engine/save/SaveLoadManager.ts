@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { GameSaveState } from '../../types';
+import { EmployeeAIEngine } from '../ai/EmployeeAI';
 
 export const CURRENT_SAVE_VERSION = '1.0.0';
 
@@ -123,7 +124,10 @@ export class SaveLoadManager {
       },
       currentOfficeId: raw.currentOfficeId || 'office_tier_1',
       furniture: raw.furniture || [],
-      employees: raw.employees || [],
+      employees: (raw.employees || []).map((emp) => {
+        EmployeeAIEngine.initAI2Fields(emp);
+        return emp;
+      }),
       activeProjects: raw.activeProjects || [],
       completedProjectsCount: raw.completedProjectsCount || 0,
       cashHistory: raw.cashHistory || [500000000],

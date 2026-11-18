@@ -26,7 +26,7 @@ import { EconomyManager } from '../engine/economy/EconomyManager';
 import { EmployeeAIEngine } from '../engine/ai/EmployeeAI';
 import { soundManager } from '../engine/core/SoundManager';
 import { RelationshipManager } from '../engine/narrative/RelationshipManager';
-import { SprintStrategy } from '../types';
+import { SprintStrategy, SkillLevel } from '../types';
 
 interface CEODashboardProps {
   gsm: GameStateManager;
@@ -46,6 +46,10 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
   );
 
   const monthlyPayroll = EconomyManager.calculateMonthlyPayroll(gsm.employees);
+  const totalAccountsReceivable = gsm.activeProjects.reduce(
+    (sum, p) => sum + (p.accountsReceivable ?? Math.floor(p.contractValue * 0.7)),
+    0
+  );
   const currentOffice = AVAILABLE_OFFICES.find((o) => o.id === gsm.currentOfficeId) || AVAILABLE_OFFICES[0];
   const monthlyBurnRate = EconomyManager.calculateMonthlyBurnRate(
     gsm.employees,
@@ -169,37 +173,45 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
           {/* TAB 1: TỔNG QUAN */}
           {activeTab === 'OVERVIEW' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl shadow">
-                  <span className="text-xs text-slate-400 uppercase font-semibold">Định Giá Doanh Nghiệp</span>
-                  <p className="text-2xl font-black text-amber-400 mt-1 font-mono">
-                    {valuation.toLocaleString('vi-VN')} <span className="text-xs text-slate-400">VNĐ</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div className="bg-slate-800/80 border border-slate-700/80 p-3.5 sm:p-4 rounded-xl shadow">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold block truncate">Định Giá Doanh Nghiệp</span>
+                  <p className="text-lg sm:text-xl font-black text-amber-400 mt-1 font-mono truncate">
+                    {valuation.toLocaleString('vi-VN')} <span className="text-[10px] text-slate-400">đ</span>
                   </p>
-                  <span className="text-[11px] text-slate-400">Hệ số P/E & Uy tín công nghệ</span>
+                  <span className="text-[10px] text-slate-400 block truncate">Hệ số P/E & Uy tín</span>
                 </div>
 
-                <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl shadow">
-                  <span className="text-xs text-slate-400 uppercase font-semibold">Tiền Mặt Khả Dụng</span>
-                  <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">
-                    {gsm.playerStats.cash.toLocaleString('vi-VN')} <span className="text-xs text-slate-400">VNĐ</span>
+                <div className="bg-slate-800/80 border border-slate-700/80 p-3.5 sm:p-4 rounded-xl shadow">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold block truncate">Tiền Mặt Khả Dụng</span>
+                  <p className="text-lg sm:text-xl font-black text-emerald-400 mt-1 font-mono truncate">
+                    {gsm.playerStats.cash.toLocaleString('vi-VN')} <span className="text-[10px] text-slate-400">đ</span>
                   </p>
-                  <span className="text-[11px] text-emerald-400">Khả năng thanh toán cao</span>
+                  <span className="text-[10px] text-emerald-400 block truncate">Khả năng thanh toán</span>
                 </div>
 
-                <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl shadow">
-                  <span className="text-xs text-slate-400 uppercase font-semibold">Quỹ Lương Hàng Tháng</span>
-                  <p className="text-2xl font-black text-rose-400 mt-1 font-mono">
-                    {monthlyPayroll.toLocaleString('vi-VN')} <span className="text-xs text-slate-400">VNĐ</span>
+                <div className="bg-slate-800/80 border border-slate-700/80 p-3.5 sm:p-4 rounded-xl shadow">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold block truncate">Công Nợ Phải Thu</span>
+                  <p className="text-lg sm:text-xl font-black text-sky-400 mt-1 font-mono truncate">
+                    {totalAccountsReceivable.toLocaleString('vi-VN')} <span className="text-[10px] text-slate-400">đ</span>
                   </p>
-                  <span className="text-[11px] text-slate-400">Tổng {gsm.employees.length} nhân sự</span>
+                  <span className="text-[10px] text-sky-300 block truncate">70% nghiệm thu dự án</span>
                 </div>
 
-                <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl shadow">
-                  <span className="text-xs text-slate-400 uppercase font-semibold">Dự Án Đã Hoàn Thành</span>
-                  <p className="text-2xl font-black text-sky-400 mt-1 font-mono">
-                    {gsm.completedProjectsCount} <span className="text-xs text-slate-400">hợp đồng</span>
+                <div className="bg-slate-800/80 border border-slate-700/80 p-3.5 sm:p-4 rounded-xl shadow">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold block truncate">Quỹ Lương Hàng Tháng</span>
+                  <p className="text-lg sm:text-xl font-black text-rose-400 mt-1 font-mono truncate">
+                    {monthlyPayroll.toLocaleString('vi-VN')} <span className="text-[10px] text-slate-400">đ</span>
                   </p>
-                  <span className="text-[11px] text-sky-300">Uy tín: {gsm.playerStats.reputation}/100</span>
+                  <span className="text-[10px] text-slate-400 block truncate">Tổng {gsm.employees.length} nhân sự</span>
+                </div>
+
+                <div className="bg-slate-800/80 border border-slate-700/80 p-3.5 sm:p-4 rounded-xl shadow col-span-2 sm:col-span-1">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold block truncate">Hợp Đồng Hoàn Thành</span>
+                  <p className="text-lg sm:text-xl font-black text-indigo-400 mt-1 font-mono truncate">
+                    {gsm.completedProjectsCount} <span className="text-[10px] text-slate-400">dự án</span>
+                  </p>
+                  <span className="text-[10px] text-indigo-300 block truncate">Uy tín: {gsm.playerStats.reputation}/100</span>
                 </div>
               </div>
 
@@ -382,150 +394,184 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {gsm.employees.map((emp) => (
-                    <div
-                      key={emp.id}
-                      className={`p-4 rounded-xl border transition ${
-                        emp.isStriking
-                          ? 'bg-rose-950/40 border-rose-500'
-                          : emp.hasGivenNotice
-                          ? 'bg-amber-950/40 border-amber-500'
-                          : 'bg-slate-800/70 border-slate-700/80'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-xl">
-                            {emp.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
+                  {gsm.employees.map((emp) => {
+                    EmployeeAIEngine.initAI2Fields(emp);
+                    return (
+                      <div
+                        key={emp.id}
+                        className={`p-4 rounded-xl border transition ${
+                          emp.isStriking
+                            ? 'bg-rose-950/40 border-rose-500'
+                            : emp.hasGivenNotice
+                            ? 'bg-amber-950/40 border-amber-500'
+                            : emp.behaviorState === 'REQUESTING_RAISE'
+                            ? 'bg-amber-950/30 border-amber-500/80'
+                            : 'bg-slate-800/70 border-slate-700/80'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-xl shrink-0">
+                              {emp.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+                                <span>{emp.name} ({emp.age || 24}t)</span>
+                                <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-600/40 px-1.5 py-0.5 rounded font-mono">
+                                  {emp.role} • {emp.level}
+                                </span>
+                                <span className="text-[10px] bg-purple-950 text-purple-300 border border-purple-600/40 px-1.5 py-0.5 rounded font-mono">
+                                  {emp.personality}
+                                </span>
+                              </h4>
+                              <p className="text-xs text-slate-300 font-mono mt-0.5">
+                                Lương: <strong className="text-emerald-400">{emp.salary.toLocaleString('vi-VN')} đ</strong>
+                                <span className="text-[10px] text-slate-400 ml-1.5">(Kỳ vọng: {emp.salaryExpectation.toLocaleString('vi-VN')} đ)</span>
+                              </p>
+                              <p className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+                                <span>{emp.currentTask?.description || 'Đang thực hiện công việc'}</span>
+                              </p>
+                            </div>
                           </div>
+
+                          {/* Status Tag */}
+                          {emp.isStriking ? (
+                            <span className="text-[10px] font-bold text-rose-400 bg-rose-950 px-2 py-0.5 rounded border border-rose-600 flex items-center gap-1 animate-pulse shrink-0">
+                              <AlertTriangle className="w-3 h-3" /> ĐÌNH CÔNG
+                            </span>
+                          ) : emp.hasGivenNotice ? (
+                            <span className="text-[10px] font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-600 shrink-0">
+                              Nghỉ việc ({Math.ceil(emp.daysUntilQuit)}d)
+                            </span>
+                          ) : emp.behaviorState === 'REQUESTING_RAISE' ? (
+                            <span className="text-[10px] font-bold text-amber-300 bg-amber-950 px-2 py-0.5 rounded border border-amber-500 animate-pulse shrink-0">
+                              Xin Gặp CEO
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-600/40 shrink-0">
+                              {emp.behaviorState}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Các thanh chỉ số tâm lý */}
+                        <div className="grid grid-cols-2 gap-3 mt-3.5 text-[11px]">
                           <div>
-                            <h4 className="font-bold text-slate-100 flex items-center gap-2">
-                              {emp.name}
-                              <span className="text-[10px] bg-sky-950 text-sky-400 border border-sky-600/40 px-1.5 py-0.5 rounded font-mono">
-                                {emp.role} • {emp.level}
-                              </span>
-                            </h4>
-                            <p className="text-xs text-slate-400 font-mono">
-                              Lương: {emp.currentSalary.toLocaleString('vi-VN')} đ/tháng
-                            </p>
+                            <div className="flex justify-between text-slate-400 mb-1">
+                              <span>Năng lượng</span>
+                              <span className="text-amber-300 font-mono">{Math.round(emp.energy)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-amber-400 h-full" style={{ width: `${emp.energy}%` }} />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-slate-400 mb-1">
+                              <span>Bức xúc (Frustration)</span>
+                              <span className="text-rose-400 font-mono">{Math.round(emp.frustration)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-rose-500 h-full" style={{ width: `${emp.frustration}%` }} />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-slate-400 mb-1">
+                              <span>Tinh thần (Morale)</span>
+                              <span className="text-emerald-400 font-mono">{Math.round(emp.morale)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-emerald-500 h-full" style={{ width: `${emp.morale}%` }} />
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex justify-between text-slate-400 mb-1">
+                              <span>Niềm tin CEO</span>
+                              <span className="text-sky-300 font-mono">{Math.round(emp.trustInCEO)}%</span>
+                            </div>
+                            <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
+                              <div className="bg-sky-400 h-full" style={{ width: `${emp.trustInCEO}%` }} />
+                            </div>
                           </div>
                         </div>
 
-                        {/* Status Tag */}
-                        {emp.isStriking ? (
-                          <span className="text-xs font-bold text-rose-400 bg-rose-950 px-2 py-0.5 rounded border border-rose-600 flex items-center gap-1 animate-pulse">
-                            <AlertTriangle className="w-3 h-3" /> ĐÌNH CÔNG
-                          </span>
-                        ) : emp.hasGivenNotice ? (
-                          <span className="text-xs font-bold text-amber-400 bg-amber-950 px-2 py-0.5 rounded border border-amber-600">
-                            Nghỉ việc ({Math.ceil(emp.daysUntilQuit)} ngày)
-                          </span>
-                        ) : (
-                          <span className="text-xs text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-600/40">
-                            {emp.currentState}
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Các thanh chỉ số tâm lý */}
-                      <div className="grid grid-cols-2 gap-3 mt-4 text-[11px]">
-                        <div>
-                          <div className="flex justify-between text-slate-400 mb-1">
-                            <span>Năng lượng</span>
-                            <span className="text-amber-300 font-mono">{Math.round(emp.energy)}%</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-amber-400 h-full" style={{ width: `${emp.energy}%` }} />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between text-slate-400 mb-1">
-                            <span>Bất mãn (Resentment)</span>
-                            <span className="text-rose-400 font-mono">{Math.round(emp.resentment)}%</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-rose-500 h-full" style={{ width: `${emp.resentment}%` }} />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between text-slate-400 mb-1">
-                            <span>Căng thẳng (Stress)</span>
-                            <span className="text-purple-400 font-mono">{Math.round(emp.stress)}%</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-purple-500 h-full" style={{ width: `${emp.stress}%` }} />
-                          </div>
-                        </div>
-
-                        <div>
-                          <div className="flex justify-between text-slate-400 mb-1">
-                            <span>Niềm tin vào CEO</span>
-                            <span className="text-sky-300 font-mono">{Math.round(emp.ceoTrust)}%</span>
-                          </div>
-                          <div className="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden">
-                            <div className="bg-sky-400 h-full" style={{ width: `${emp.ceoTrust}%` }} />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Hành động của CEO với nhân sự */}
-                      <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-700/60">
-                        <button
-                          onClick={() => {
-                            gsm.selectedEmployeeFor1on1 = emp;
-                            gsm.openDashboardTab = null;
-                            soundManager.playClick();
-                            gsm.notify();
-                          }}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
-                        >
-                          Trò Chuyện 1-1
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            if (gsm.playerStats.cash < 2000000) {
-                              alert('Không đủ tiền mặt để thưởng nóng (Cần 2 triệu VNĐ)!');
-                              return;
-                            }
-                            gsm.playerStats.cash -= 2000000;
-                            EmployeeAIEngine.rewardEmployee(emp, 2000000);
-                            gsm.notify();
-                          }}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
-                        >
-                          Thưởng 2Tr
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            const newSalary = emp.currentSalary + 3000000;
-                            EmployeeAIEngine.raiseSalary(emp, newSalary);
-                            soundManager.playSuccess();
-                            gsm.notify();
-                          }}
-                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
-                        >
-                          Tăng Lương +3Tr
-                        </button>
-
-                        {emp.isStriking && (
+                        {/* Hành động của CEO với nhân sự */}
+                        <div className="flex items-center gap-2 mt-3.5 pt-3 border-t border-slate-700/60 flex-wrap">
                           <button
                             onClick={() => {
-                              EmployeeAIEngine.resolveStrikeNegotiation(emp, true);
+                              gsm.selectedEmployeeFor1on1 = emp;
+                              gsm.openDashboardTab = null;
+                              soundManager.playClick();
+                              gsm.notify();
+                            }}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                          >
+                            Hồ Sơ & 1-1
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              if (gsm.playerStats.cash < 2000000) {
+                                alert('Không đủ tiền mặt để thưởng nóng (Cần 2 triệu VNĐ)!');
+                                return;
+                              }
+                              gsm.playerStats.cash -= 2000000;
+                              EmployeeAIEngine.rewardEmployee(emp, 2000000, gsm.timeManager.day);
+                              gsm.notify();
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                          >
+                            Thưởng 2Tr
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const newSalary = emp.salary + 3000000;
+                              EmployeeAIEngine.raiseSalary(emp, newSalary, gsm.timeManager.day);
                               soundManager.playSuccess();
                               gsm.notify();
                             }}
-                            className="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                            className="bg-sky-600 hover:bg-sky-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
                           >
-                            Hòa Giải Đình Công
+                            Tăng Lương +3Tr
                           </button>
-                        )}
+
+                          <button
+                            onClick={() => {
+                              const levelHierarchy: SkillLevel[] = ['INTERN', 'JUNIOR', 'MID', 'SENIOR', 'LEAD'];
+                              const cur = levelHierarchy.indexOf(emp.level);
+                              if (cur < levelHierarchy.length - 1) {
+                                EmployeeAIEngine.promoteEmployee(emp, levelHierarchy[cur + 1], gsm.timeManager.day);
+                                gsm.decisionLog.push(`Bổ nhiệm thăng chức cho ${emp.name} lên ${levelHierarchy[cur + 1]}!`);
+                                gsm.notify();
+                              } else {
+                                alert(`${emp.name} đã ở bậc LEAD cao nhất!`);
+                              }
+                            }}
+                            className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                          >
+                            Thăng Chức
+                          </button>
+
+                          {emp.isStriking && (
+                            <button
+                              onClick={() => {
+                                EmployeeAIEngine.resolveStrikeNegotiation(emp, true, gsm.timeManager.day);
+                                soundManager.playSuccess();
+                                gsm.notify();
+                              }}
+                              className="bg-amber-600 hover:bg-amber-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                            >
+                              Hòa Giải Đình Công
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -681,15 +727,36 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                           </div>
                         </div>
 
-                        {/* Tiến độ Sprint */}
-                        <div className="space-y-1">
+                        {/* Tiến độ Sprint & Phân rã khối lượng công việc (Task Scope) */}
+                        <div className="space-y-2">
                           <div className="flex justify-between text-xs text-slate-300">
-                            <span>Tiến độ hoàn thành Sprint: {percent}%</span>
-                            <span className="text-rose-400 font-semibold font-mono">Số bug tồn đọng: {proj.currentBugs}</span>
+                            <span>Tiến độ Sprint: <strong className="text-sky-400 font-mono">{percent}%</strong> (Công nợ bàn giao: {(proj.contractValue * 0.7).toLocaleString('vi-VN')} đ)</span>
+                            <span className="text-rose-400 font-semibold font-mono">Bug tồn đọng: {proj.currentBugs}</span>
                           </div>
                           <div className="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden">
                             <div className="bg-sky-500 h-full transition-all duration-300" style={{ width: `${percent}%` }} />
                           </div>
+
+                          {proj.taskScope && (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] font-mono">
+                              <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
+                                <span className="text-slate-400 text-[10px] block">Frontend:</span>
+                                <span className="text-sky-300 font-bold">{Math.round(proj.taskScope.frontendDone)} / {proj.taskScope.frontendUnits}</span>
+                              </div>
+                              <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
+                                <span className="text-slate-400 text-[10px] block">Backend:</span>
+                                <span className="text-emerald-300 font-bold">{Math.round(proj.taskScope.backendDone)} / {proj.taskScope.backendUnits}</span>
+                              </div>
+                              <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
+                                <span className="text-slate-400 text-[10px] block">UI/UX Design:</span>
+                                <span className="text-pink-300 font-bold">{Math.round(proj.taskScope.designDone)} / {proj.taskScope.designUnits}</span>
+                              </div>
+                              <div className="bg-slate-900/60 p-2 rounded border border-slate-800">
+                                <span className="text-slate-400 text-[10px] block">Testing & QA:</span>
+                                <span className="text-amber-300 font-bold">{Math.round(proj.taskScope.testingDone)} / {proj.taskScope.testingUnits}</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Phân công nhân sự */}
@@ -733,26 +800,37 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
           {/* TAB 4: TÀI CHÍNH & VAY VỐN */}
           {activeTab === 'FINANCE' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl">
-                  <span className="text-xs text-slate-400 font-semibold uppercase">Dòng Tiền Thực Tế</span>
-                  <p className="text-xl font-black text-emerald-400 font-mono mt-1">
+                  <span className="text-[11px] text-slate-400 font-semibold uppercase block truncate">Dòng Tiền Khả Dụng</span>
+                  <p className="text-lg sm:text-xl font-black text-emerald-400 font-mono mt-1 truncate">
                     {gsm.playerStats.cash.toLocaleString('vi-VN')} đ
                   </p>
+                  <span className="text-[10px] text-slate-400">Tiền mặt trong tài khoản</span>
                 </div>
 
                 <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl">
-                  <span className="text-xs text-slate-400 font-semibold uppercase">Doanh Thu Tích Lũy Tháng Này</span>
-                  <p className="text-xl font-black text-sky-400 font-mono mt-1">
+                  <span className="text-[11px] text-slate-400 font-semibold uppercase block truncate">Công Nợ Phải Thu</span>
+                  <p className="text-lg sm:text-xl font-black text-sky-400 font-mono mt-1 truncate">
+                    {totalAccountsReceivable.toLocaleString('vi-VN')} đ
+                  </p>
+                  <span className="text-[10px] text-slate-400">70% nghiệm thu dự án</span>
+                </div>
+
+                <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl">
+                  <span className="text-[11px] text-slate-400 font-semibold uppercase block truncate">Doanh Thu Tháng Này</span>
+                  <p className="text-lg sm:text-xl font-black text-indigo-400 font-mono mt-1 truncate">
                     {gsm.monthlyRevenueAccumulated.toLocaleString('vi-VN')} đ
                   </p>
+                  <span className="text-[10px] text-slate-400">Doanh thu chốt ngày 30</span>
                 </div>
 
                 <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl">
-                  <span className="text-xs text-slate-400 font-semibold uppercase">Tổng Dư Nợ Ngân Hàng</span>
-                  <p className="text-xl font-black text-amber-400 font-mono mt-1">
+                  <span className="text-[11px] text-slate-400 font-semibold uppercase block truncate">Dư Nợ Ngân Hàng</span>
+                  <p className="text-lg sm:text-xl font-black text-amber-400 font-mono mt-1 truncate">
                     {gsm.loans.reduce((sum, l) => sum + l.principal, 0).toLocaleString('vi-VN')} đ
                   </p>
+                  <span className="text-[10px] text-slate-400">Gốc vay trả góp V-Bank</span>
                 </div>
               </div>
 

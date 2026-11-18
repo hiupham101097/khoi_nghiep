@@ -91,6 +91,7 @@ export class GameStateManager {
   public isBankModalOpen: boolean = false;
   public isSaveMenuOpen: boolean = false;
   public selectedEmployeeFor1on1: EmployeeAIEntity | null = null;
+  private aiDecisionTimer: number = 0;
 
   // Listeners cập nhật UI React
   private changeListeners: (() => void)[] = [];
@@ -165,6 +166,25 @@ export class GameStateManager {
         const isOT = this.isOvertimeActive && this.timeManager.isOvertimeHour();
         const isDailyStandup = this.timeManager.hour === 9 && this.timeManager.minute <= 30;
 
+        // Nhịp mô phỏng AI (AI Decision Tick mỗi 1.2s - không tính lại ở mỗi frame 60fps)
+        this.aiDecisionTimer += deltaTime;
+        if (this.aiDecisionTimer >= 1.2) {
+          this.aiDecisionTimer = 0;
+          this.employees.forEach((emp) => {
+            const { crisisAlert } = EmployeeAIEngine.evaluateBehaviorState(
+              emp,
+              this.timeManager,
+              this.isOvertimeActive,
+              isDailyStandup,
+              this.activeProjects,
+              this.timeManager.day
+            );
+            if (crisisAlert && crisisAlert.type === 'RAISE_REQUEST') {
+              this.addFloatingText(`💬 ${emp.name} xin gặp CEO`, 380, 200, '#fbbf24');
+            }
+          });
+        }
+
         // Chuông báo họp Standup 09:00 sáng
         if (isDailyStandup && !this.hasPlayedStandupSoundToday) {
           this.hasPlayedStandupSoundToday = true;
@@ -172,6 +192,8 @@ export class GameStateManager {
           this.addFloatingText('🔔 HỌP DAILY STANDUP 09:00', 380, 70, '#38bdf8');
         }
 
+        const whiteboardPos = { x: 380, y: 55 };
+        const ceoDeskPos = { x: 160, y: 140 };
         const coffeePos = { x: 620, y: 90 };
         const loungePos = { x: 500, y: 370 };
         const exitPos = { x: 380, y: 480 };
@@ -182,6 +204,8 @@ export class GameStateManager {
             emp,
             deltaTime,
             deskPos,
+            whiteboardPos,
+            ceoDeskPos,
             coffeePos,
             loungePos,
             exitPos,
@@ -246,6 +270,11 @@ export class GameStateManager {
 
       case 'USE_COFFEE':
         this.playerStats.energy = Math.min(100, this.playerStats.energy + 20);
+        this.employees.forEach((emp) => {
+          emp.morale = Math.min(100, (emp.morale ?? 70) + 5);
+          if (emp.happiness !== undefined) emp.happiness = emp.morale;
+        });
+        this.addFloatingText('+20 Năng Lượng ☕', this.playerController.pos.x, this.playerController.pos.y - 25, '#fbbf24');
         soundManager.playCashEarned();
         this.notify();
         break;
@@ -284,24 +313,37 @@ export class GameStateManager {
     const hasCoffee = this.furniture.some((f) => f.id === 'item_coffee_espresso' && f.purchased);
     const hasErgo = this.furniture.some((f) => f.id === 'item_chair_ergo' && f.purchased);
 
-    // 1. Cập nhật tâm lý & hành vi từng nhân viên AI
-    this.employees.forEach((emp) => {
-      EmployeeAIEngine.updateEmployeeCycle(
-        emp,
-        this.timeManager,
-        this.activeProjects,
-        hasCoffee,
-        hasErgo,
-        this.isOvertimeActive
-      );
-    });
-
-    // 1b. Cập nhật Mạng lưới xã hội & Mục tiêu cá nhân 2.0
-    EmployeeAIEngine.updateSocialGraphAndPersonalGoals(
+    // 1. Cập nhật chu kỳ ngày tâm lý, quan hệ & khủng hoảng AI 2.0
+    const crisisAlerts = EmployeeAIEngine.updateDailyCycle(
       this.employees,
       this.activeProjects,
-      this.isOvertimeActive
+      this.isOvertimeActive,
+      day
     );
+    crisisAlerts.forEach((alert) => {
+      this.decisionLog.push(`⚠️ ${alert.message}`);
+    });
+
+    // 1b. Đánh giá thử việc (Probation Period Tracking)
+    this.employees.forEach((emp) => {
+      if (emp.isProbation && emp.probationDaysLeft) {
+        emp.probationDaysLeft -= 1;
+        if (emp.probationDaysLeft <= 0) {
+          emp.isProbation = false;
+          EmployeeAIEngine.addMemory(
+            emp,
+            'PROMOTED',
+            'Hoàn thành xuất sắc 30 ngày thử việc và trở thành nhân sự chính thức!',
+            30,
+            25,
+            day
+          );
+          this.decisionLog.push(`🎉 ${emp.name} chính thức trở thành nhân viên hợp đồng dài hạn sau kỳ thử việc!`);
+          this.addFloatingText(`🎉 CHÍNH THỨC: ${emp.name}`, 380, 210, '#22c55e');
+          soundManager.playSuccess();
+        }
+      }
+    });
 
     // 2. Cập nhật tiến độ các dự án đang chạy theo Chiến lược Sprint hiện hành
     this.activeProjects.forEach((proj) => {
@@ -333,7 +375,9 @@ export class GameStateManager {
     const newStage = CompanyGrowthEngine.evaluateStage(
       valuation,
       this.completedProjectsCount,
-      this.employees.length
+      this.employees.length,
+      this.playerStats.reputation,
+      this.playerStats.cash
     );
     if (newStage !== this.enterpriseStage) {
       this.enterpriseStage = newStage;
@@ -457,6 +501,24 @@ export class GameStateManager {
   // Xử lý quyết toán tài chính cuối tháng
   private handleMonthlyCycle(month: number, year: number) {
     const currentOffice = AVAILABLE_OFFICES.find((o) => o.id === this.currentOfficeId) || null;
+    const payroll = EconomyManager.calculateMonthlyPayroll(this.employees);
+
+    // Kiểm tra khả năng chi trả quỹ lương
+    if (this.playerStats.cash < payroll && this.employees.length > 0) {
+      this.employees.forEach((emp) => {
+        EmployeeAIEngine.addMemory(
+          emp,
+          'UNFAIR_TREATMENT',
+          `Bị chậm chi trả lương tháng ${month}!`,
+          -30,
+          -35,
+          this.timeManager.day
+        );
+      });
+      this.decisionLog.push(`🚨 BÁO ĐỘNG: Cạn kiệt dòng tiền, không đủ thanh toán quỹ lương tháng ${month}! Toàn bộ nhân sự bất mãn nghiêm trọng.`);
+      this.addFloatingText('🚨 CHẬM LƯƠNG (-35 Trung thành)', 380, 210, '#ef4444');
+      soundManager.playDramaticChord();
+    }
 
     const result = EconomyManager.processMonthlySettlement(
       this.playerStats.cash,

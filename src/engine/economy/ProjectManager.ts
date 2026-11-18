@@ -100,11 +100,26 @@ export class ProjectManager {
     project.status = 'IN_PROGRESS';
     project.depositReceived = true;
     const depositAmount = Math.floor(project.contractValue * 0.3);
+    project.accountsReceivable = Math.floor(project.contractValue * 0.7);
+
+    // Khởi tạo phân rã công việc (Work Breakdown Scope)
+    const total = project.totalWorkUnits;
+    project.taskScope = {
+      frontendUnits: Math.floor(total * 0.35),
+      frontendDone: 0,
+      backendUnits: Math.floor(total * 0.35),
+      backendDone: 0,
+      designUnits: Math.floor(total * 0.15),
+      designDone: 0,
+      testingUnits: Math.floor(total * 0.15),
+      testingDone: 0
+    };
+
     soundManager.playCashEarned();
     return { depositAmount };
   }
 
-  // Cập nhật tiến độ dự án mỗi ngày theo Chiến lược Sprint
+  // Cập nhật tiến độ dự án mỗi ngày theo Chiến lược Sprint và năng lực vai trò
   public static updateDailyProjectSprint(
     project: ProjectContract,
     assignedEmployees: EmployeeAIEntity[],
@@ -120,6 +135,21 @@ export class ProjectManager {
     if (project.daysRemaining <= 0) {
       project.status = 'OVERDUE';
       isOverdue = true;
+    }
+
+    // Đảm bảo taskScope tồn tại
+    if (!project.taskScope) {
+      const total = project.totalWorkUnits;
+      project.taskScope = {
+        frontendUnits: Math.floor(total * 0.35),
+        frontendDone: Math.floor(project.completedWorkUnits * 0.35),
+        backendUnits: Math.floor(total * 0.35),
+        backendDone: Math.floor(project.completedWorkUnits * 0.35),
+        designUnits: Math.floor(total * 0.15),
+        designDone: Math.floor(project.completedWorkUnits * 0.15),
+        testingUnits: Math.floor(total * 0.15),
+        testingDone: Math.floor(project.completedWorkUnits * 0.15)
+      };
     }
 
     // Hệ số chiến lược Sprint
@@ -148,34 +178,54 @@ export class ProjectManager {
         break;
     }
 
-    // Tổng tiến độ do các nhân sự đóng góp
-    let totalSprintProgress = 0;
     let totalBugsDelta = 0;
+    const scope = project.taskScope;
 
     assignedEmployees.forEach((emp) => {
       if (!emp.isStriking && emp.currentState === 'WORK') {
-        const factor = (emp.speed / 40) * (emp.quality / 100);
-        totalSprintProgress += factor * 5 * speedMultiplier;
+        const factor = (emp.speed / 45) * (emp.quality / 100) * speedMultiplier;
+        const progressChunk = factor * 4.5;
 
-        // Sinh bug tiềm ẩn
-        if (Math.random() < (emp.bugRate / 100) * 0.15 * bugMultiplier) {
+        // Phân phối theo đúng vai trò chuyên môn
+        if (emp.role === 'FRONTEND') {
+          scope.frontendDone = Math.min(scope.frontendUnits, scope.frontendDone + progressChunk * 1.5);
+        } else if (emp.role === 'BACKEND') {
+          scope.backendDone = Math.min(scope.backendUnits, scope.backendDone + progressChunk * 1.5);
+        } else if (emp.role === 'DESIGNER') {
+          scope.designDone = Math.min(scope.designUnits, scope.designDone + progressChunk * 1.5);
+        } else if (emp.role === 'TESTER') {
+          scope.testingDone = Math.min(scope.testingUnits, scope.testingDone + progressChunk * 1.5);
+          // Tester rà soát bug chuyên sâu
+          const fixCount = Math.floor(emp.quality / 25) + baseFixBug;
+          project.currentBugs = Math.max(0, project.currentBugs - fixCount);
+        } else {
+          // FULLSTACK hoặc PM
+          scope.frontendDone = Math.min(scope.frontendUnits, scope.frontendDone + progressChunk * 0.7);
+          scope.backendDone = Math.min(scope.backendUnits, scope.backendDone + progressChunk * 0.7);
+        }
+
+        // Sinh bug tiềm ẩn nếu mệt mỏi
+        if (Math.random() < (emp.bugRate / 100) * 0.12 * bugMultiplier) {
           project.currentBugs += 1;
           totalBugsDelta += 1;
         }
 
-        // Tester hoặc Lead sẽ giúp fix bug
-        if (emp.role === 'TESTER') {
-          project.currentBugs = Math.max(0, project.currentBugs - Math.floor(emp.quality / 25) - baseFixBug);
-        } else if (strategy === 'REFACTOR_DEBT' || strategy === 'QUALITY_FIRST') {
+        if (strategy === 'REFACTOR_DEBT' || strategy === 'QUALITY_FIRST') {
           project.currentBugs = Math.max(0, project.currentBugs - baseFixBug);
         }
       }
     });
 
-    project.completedWorkUnits = Math.min(project.totalWorkUnits, project.completedWorkUnits + totalSprintProgress);
+    project.completedWorkUnits = Math.min(
+      project.totalWorkUnits,
+      scope.frontendDone + scope.backendDone + scope.designDone + scope.testingDone
+    );
 
-    // Kiểm tra hoàn thành dự án
-    const isCompleted = project.completedWorkUnits >= project.totalWorkUnits && project.currentBugs === 0;
+    // Điều kiện nghiệm thu bàn giao:
+    // 1. Toàn bộ khối lượng công việc hoàn thành 100%
+    // 2. Số bug không vượt quá ngưỡng cho phép (tối đa 1 bug cho dự án nhỏ, 0 bug cho Enterprise)
+    const maxAllowedBugs = project.clientType === 'ENTERPRISE' || project.clientType === 'GOVERNMENT' ? 0 : 1;
+    const isCompleted = project.completedWorkUnits >= project.totalWorkUnits && project.currentBugs <= maxAllowedBugs;
 
     return { isCompleted, isOverdue, bugsDelta: totalBugsDelta };
   }

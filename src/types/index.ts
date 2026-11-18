@@ -50,36 +50,122 @@ export interface PlayerStats {
 
 export type EmployeeRole = 'FRONTEND' | 'BACKEND' | 'FULLSTACK' | 'DESIGNER' | 'TESTER' | 'PRODUCT_MANAGER';
 export type SkillLevel = 'INTERN' | 'JUNIOR' | 'MID' | 'SENIOR' | 'LEAD';
+export type PersonalityType = 'AMBITIOUS' | 'HARDWORKING' | 'PRAGMATIC' | 'CREATIVE' | 'SOCIAL' | 'LAID_BACK';
+
+export type EmployeeBehaviorState =
+  | 'IDLE'
+  | 'GOING_TO_WORK'
+  | 'GOING_HOME'
+  | 'WORKING'
+  | 'BREAK'
+  | 'TALKING'
+  | 'MEETING'
+  | 'LEARNING'
+  | 'STRESSED'
+  | 'SICK_LEAVE'
+  | 'REQUESTING_RAISE'
+  | 'JOB_SEARCHING'
+  | 'RESIGNING'
+  | 'PROTESTING';
+
+export type MemoryType =
+  | 'HIRED'
+  | 'PROMISED_RAISE'
+  | 'REWARDED_BONUS'
+  | 'SALARY_RAISE'
+  | 'PROMOTED'
+  | 'CRUNCH_OVERTIME'
+  | 'DISPUTE_PETITION'
+  | 'REJECTED_RAISE'
+  | 'RESOLVED_STRIKE'
+  | 'UNFAIR_TREATMENT'
+  | 'COLLEAGUE_BONDING'
+  | 'STANDUP_PRAISE'
+  | 'REFACTOR_DEBT';
+
+export interface EmployeeMemoryItem {
+  id: string;
+  type: MemoryType;
+  title: string;
+  impactMorale: number; // Điểm tác động tinh thần (+15, -20)
+  impactLoyalty: number; // Điểm tác động trung thành (+10, -15)
+  timestamp: number;
+  day: number;
+}
+
+export interface EmployeeSkillLevels {
+  frontend: number;  // 0 - 100
+  backend: number;   // 0 - 100
+  design: number;    // 0 - 100
+  testing: number;   // 0 - 100
+  devops: number;    // 0 - 100
+}
+
+export interface EmployeeRelationshipItem {
+  affinity: number;       // Mức độ thân thiện (-100 đến +100)
+  trust: number;          // Mức độ tin tưởng (0 đến 100)
+  lastInteractionDay: number;
+}
+
+export type TaskType =
+  | 'IDLE'
+  | 'CODING'
+  | 'BUG_FIXING'
+  | 'CODE_REVIEW'
+  | 'UI_DESIGN'
+  | 'TESTING'
+  | 'DEPLOYING'
+  | 'STANDUP'
+  | 'LEARNING';
+
+export interface EmployeeCurrentTask {
+  projectId: string | null;
+  taskType: TaskType;
+  description: string;
+  progress: number; // 0 - 100
+  efficiencyMultiplier: number;
+}
 
 export interface EmployeeAIEntity {
   id: string;
   name: string;
+  age: number;
   avatarSeed: number;
   gender: 'MALE' | 'FEMALE';
   role: EmployeeRole;
   level: SkillLevel;
   experienceYears: number;
+  personality: PersonalityType;
   
-  // Năng lực sản xuất
+  // Năng lực sản xuất & Kỹ năng chuyên sâu
   speed: number;          // Tốc độ hoàn thành công việc (10 - 100)
   quality: number;        // Chất lượng code/design (10 - 100)
   bugRate: number;        // Tỷ lệ sinh lỗi (0 - 50%)
+  skillLevels: EmployeeSkillLevels;
   
   // Tài chính & Kỳ vọng
-  expectedSalary: number; // Lương kỳ vọng (VNĐ/tháng)
-  currentSalary: number;  // Lương hiện tại
+  salary: number;         // Lương thực nhận hiện tại (VNĐ/tháng)
+  salaryExpectation: number; // Lương kỳ vọng
+  currentSalary: number;  // Đồng bộ tương thích ngược
+  expectedSalary: number; // Đồng bộ tương thích ngược
   
   // Tâm lý & Sinh hoạt
+  health: number;         // Thể lực / Sức khỏe (0 - 100)
   energy: number;         // Năng lượng (0 - 100)
-  happiness: number;      // Hạnh phúc (0 - 100)
+  morale: number;         // Tinh thần / Hạnh phúc (0 - 100)
+  happiness: number;      // Đồng bộ tương thích ngược
   stress: number;         // Căng thẳng (0 - 100)
-  resentment: number;     // Mức độ ức chế/bất mãn (0 - 100)
+  frustration: number;    // Mức độ ức chế / bất mãn (0 - 100)
+  resentment: number;     // Đồng bộ tương thích ngược
   loyalty: number;        // Độ trung thành (0 - 100)
-  ceoTrust: number;       // Niềm tin vào CEO (0 - 100)
+  trustInCEO: number;     // Niềm tin vào CEO (0 - 100)
+  ceoTrust: number;       // Đồng bộ tương thích ngược
   ambition: number;       // Tham vọng thăng tiến (0 - 100)
   
-  // Trạng thái hoạt động & Tọa độ di chuyển thực tế trong văn phòng
-  currentState: CharacterAnimationState;
+  // Trạng thái hoạt động & Hành vi AI 2.0
+  behaviorState: EmployeeBehaviorState; // Trạng thái hành vi cấp cao
+  currentState: CharacterAnimationState; // Trạng thái animation khung vẽ
+  currentTask: EmployeeCurrentTask;      // Nhiệm vụ đang thực hiện
   deskIndex: number;      // Bàn làm việc được gán trong văn phòng (-1 nếu chưa có)
   assignedProjectId: string | null;
   currentPos?: Position2D; // Tọa độ X, Y thực tế đang đứng
@@ -88,6 +174,13 @@ export interface EmployeeAIEntity {
   speechTimer?: number;    // Thời gian hiển thị bong bóng thoại (giây)
   walkFrame?: number;      // Frame bước đi Chibi
   
+  // Quản lý nhân sự & Thử việc
+  isProbation?: boolean;
+  probationDaysLeft?: number;
+  totalLinesOfCodeProduced?: number;
+  totalBugsProduced?: number;
+  totalBugsFixed?: number;
+
   // Hành vi khủng hoảng & AI 2.0 (Quan hệ xã hội, Mục tiêu cá nhân, Lịch sinh hoạt)
   isStriking: boolean;    // Đang đình công
   hasGivenNotice: boolean;// Đã nộp đơn nghỉ việc
@@ -98,17 +191,22 @@ export interface EmployeeAIEntity {
     type: 'PROMOTION_LEAD' | 'SAVING_MONEY' | 'LEARN_NEW_TECH' | 'WORK_LIFE_BALANCE' | 'EARN_ESOP';
     title: string;
     progress: number; // 0 - 100
+    targetValue?: number;
   };
-  colleagueRelations?: Record<string, number>; // Điểm quan hệ với từng đồng nghiệp (-100 đến +100)
+  relationships: Record<string, EmployeeRelationshipItem>;
+  colleagueRelations?: Record<string, number>; // Đồng bộ tương thích ngược
   dailyActivity?: 'COMMUTING' | 'DAILY_STANDUP' | 'DEEP_WORK' | 'COFFEE_BREAK' | 'LUNCH_BONDING' | 'AFTERNOON_SPRINT' | 'OVERTIME' | 'GOING_HOME' | 'ON_STRIKE';
 
-  // Bộ nhớ sự kiện (Event Memory)
-  memoryLog: string[];
+  // Bộ nhớ sự kiện chuyên sâu (Memory System)
+  memories: EmployeeMemoryItem[];
+  memoryLog: string[]; // Đồng bộ tương thích ngược
 }
+
+export type RecruitmentTier = 'STANDARD' | 'SPONSORED_TOPCV' | 'HEADHUNTER_EXECUTIVE';
 
 export interface CandidateEntity extends Omit<EmployeeAIEntity, 'currentSalary' | 'deskIndex' | 'assignedProjectId' | 'isStriking' | 'hasGivenNotice' | 'daysUntilQuit' | 'currentState'> {
   bio: string;
-  personality: 'HARDWORKING' | 'AMBITIOUS' | 'PRAGMATIC' | 'FRAGILE' | 'LOYAL';
+  recruitmentTier?: RecruitmentTier;
 }
 
 export interface FurnitureItem {
@@ -159,6 +257,17 @@ export interface ProjectContract {
   assignedEmployeeIds: string[];
   status: 'PROPOSED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE' | 'CANCELLED';
   description: string;
+  taskScope?: {
+    frontendUnits: number;
+    frontendDone: number;
+    backendUnits: number;
+    backendDone: number;
+    designUnits: number;
+    designDone: number;
+    testingUnits: number;
+    testingDone: number;
+  };
+  accountsReceivable?: number; // Công nợ phải thu (70% giá trị hợp đồng khi bàn giao đạt chuẩn)
 }
 
 export interface FinancialRecord {

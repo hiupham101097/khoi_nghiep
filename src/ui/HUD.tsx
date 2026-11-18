@@ -25,7 +25,11 @@ import {
   ShieldAlert,
   Gamepad2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Users,
+  FolderGit2,
+  Coffee,
+  Sparkles
 } from 'lucide-react';
 import { soundManager } from '../engine/core/SoundManager';
 import { AVAILABLE_OFFICES, ENTERPRISE_STAGES } from '../engine/economy/CompanyManager';
@@ -87,6 +91,38 @@ export const HUD: React.FC<HUDProps> = ({
     gsm.romance.datingHistory.length,
     gsm.playerStats.cash
   );
+
+  // Chỉ số tinh thần chung & Quy mô nhân sự (Lấy cảm hứng từ Ảnh tham khảo 3: "The number of employees", "Mood")
+  const employeeCount = gsm.employees.length;
+  const avgMorale = employeeCount > 0
+    ? Math.round(gsm.employees.reduce((sum, e) => sum + (e.morale ?? 70), 0) / employeeCount)
+    : 100;
+  const moodBadge = avgMorale >= 80
+    ? { text: 'Rất Tốt', color: 'text-emerald-400 bg-emerald-950/80 border-emerald-500/50' }
+    : avgMorale >= 60
+    ? { text: 'Tốt', color: 'text-sky-400 bg-sky-950/80 border-sky-500/50' }
+    : avgMorale >= 40
+    ? { text: 'Áp Lực', color: 'text-amber-400 bg-amber-950/80 border-amber-500/50' }
+    : { text: 'Căng Thẳng', color: 'text-rose-400 bg-rose-950/80 border-rose-500/50' };
+
+  // Xử lý uống cà phê tại Pantry
+  const handlePantryCoffee = () => {
+    if (gsm.playerStats.energy >= 100) {
+      gsm.addFloatingText('Đã đầy năng lượng!', gsm.playerController.pos.x, gsm.playerController.pos.y - 20, '#38bdf8');
+      gsm.notify();
+      return;
+    }
+    gsm.playerStats.energy = Math.min(100, gsm.playerStats.energy + 20);
+    // Tăng nhẹ tinh thần nhân viên nếu có
+    gsm.employees.forEach((emp) => {
+      emp.morale = Math.min(100, (emp.morale ?? 70) + 5);
+      if (emp.happiness !== undefined) emp.happiness = emp.morale;
+    });
+    gsm.addFloatingText('+20 Năng Lượng ☕', gsm.playerController.pos.x, gsm.playerController.pos.y - 25, '#fbbf24');
+    gsm.decisionLog.push('CEO thưởng thức cà phê và mời toàn thể nhân viên (+20 Năng lượng, +5 Tinh thần).');
+    soundManager.playClick();
+    gsm.notify();
+  };
 
   return (
     <div className="absolute top-0 left-0 right-0 p-2 sm:p-3 pointer-events-none flex flex-col gap-2 z-20">
@@ -155,6 +191,30 @@ export const HUD: React.FC<HUDProps> = ({
           >
             <TrendingDown className="w-3 h-3 text-slate-400" />
             <span>{runwayMonths > 99 ? '∞' : `${runwayMonths}th`}</span>
+          </div>
+
+          {/* Quy mô nhân sự (Lấy cảm hứng từ Ảnh tham khảo 3: "The number of employees") */}
+          <button
+            onClick={() => {
+              gsm.openDashboardTab = 'HR';
+              soundManager.playClick();
+              gsm.notify();
+            }}
+            className="flex items-center gap-1 bg-slate-800/90 hover:bg-slate-700 border border-slate-700 px-2 py-1 rounded-lg text-xs cursor-pointer transition shadow-inner"
+            title="Đội ngũ nhân sự (Nhấn để xem hồ sơ nhân viên)"
+          >
+            <Users className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="font-bold text-slate-100">{employeeCount}</span>
+            <span className="text-[10px] text-slate-400 hidden sm:inline">NV</span>
+          </button>
+
+          {/* Chỉ số tinh thần chung (Lấy cảm hứng từ Ảnh tham khảo 3: "Mood: Good") */}
+          <div
+            className={`hidden md:flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold shadow-inner ${moodBadge.color}`}
+            title={`Tinh thần doanh nghiệp trung bình: ${avgMorale}%`}
+          >
+            <Heart className="w-3.5 h-3.5 fill-current" />
+            <span>{moodBadge.text}</span>
           </div>
 
           {/* Nút báo động Khủng hoảng Kiến Nghị nếu có */}
@@ -311,6 +371,72 @@ export const HUD: React.FC<HUDProps> = ({
           <span>|</span>
           <span>Tương tác: <kbd className="bg-slate-800 px-1 py-0.5 rounded text-amber-300 font-mono">[E]</kbd></span>
         </div>
+      </div>
+
+      {/* THANH ĐIỀU HƯỚNG NHANH PHÍA ĐÁY (Lấy cảm hứng từ Ảnh tham khảo 3 & 4: "Employ", "Business", "Lobby") */}
+      <div className="fixed bottom-3 left-1/2 -translate-x-1/2 pointer-events-auto z-20 flex items-center gap-1.5 sm:gap-2 bg-slate-900/95 backdrop-blur-md border border-slate-700/80 p-1.5 rounded-2xl shadow-2xl">
+        <button
+          onClick={() => {
+            gsm.isRecruitModalOpen = true;
+            soundManager.playClick();
+            gsm.notify();
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+          title="Tuyển Dụng Nhân Sự [HR]"
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Tuyển Dụng</span>
+          <span className="text-[10px] bg-sky-900/80 px-1.5 py-0.2 rounded-full font-mono">{employeeCount}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            gsm.isProjectTenderOpen = true;
+            soundManager.playClick();
+            gsm.notify();
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+          title="Nhận Thầu Dự Án Phần Mềm [Projects]"
+        >
+          <FolderGit2 className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Dự Án</span>
+          <span className="text-[10px] bg-emerald-900/80 px-1.5 py-0.2 rounded-full font-mono">{gsm.activeProjects.length}</span>
+        </button>
+
+        <button
+          onClick={() => {
+            gsm.openDashboardTab = 'OVERVIEW';
+            soundManager.playClick();
+            gsm.notify();
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+          title="CEO Suite / Dashboard Quản Trị [TAB]"
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">CEO Suite</span>
+        </button>
+
+        <button
+          onClick={handlePantryCoffee}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          title="Uống Cà Phê (+20 Năng Lượng)"
+        >
+          <Coffee className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden md:inline">Pantry</span>
+        </button>
+
+        <button
+          onClick={() => {
+            gsm.isSaveMenuOpen = true;
+            soundManager.playClick();
+            gsm.notify();
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          title="Lưu / Tải Tiến Trình [ESC]"
+        >
+          <Save className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="hidden md:inline">Lưu</span>
+        </button>
       </div>
     </div>
   );

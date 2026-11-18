@@ -228,16 +228,20 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
 
       // Bàn CEO
       { x: 80, y: 60, width: 140, height: 80 },
-      // Bàn Pantry & Cà phê
-      { x: 600, y: 60, width: 140, height: 70 },
-      // Cụm bàn làm việc số 1 (Devs)
-      { x: 120, y: 200, width: 220, height: 90 },
-      // Cụm bàn làm việc số 2 (Design & QA)
-      { x: 440, y: 200, width: 220, height: 90 },
-      // Cụm bàn làm việc số 3
-      { x: 120, y: 340, width: 220, height: 90 },
-      // Khu giải trí bi-lắc / server
-      { x: 440, y: 340, width: 220, height: 90 }
+      // Quầy Pantry, Cà phê & Cây nước nóng lạnh (Ảnh 1)
+      { x: 570, y: 55, width: 175, height: 75 },
+      // Kệ sách, Điều hòa cây & Máy in photo góc tường trái (Ảnh 1 & 4)
+      { x: 38, y: 55, width: 42, height: 110 },
+      { x: 38, y: 185, width: 36, height: 90 },
+      { x: 38, y: 345, width: 42, height: 70 },
+      // Cụm bàn làm việc số 1 (Engineering Pod)
+      { x: 110, y: 195, width: 220, height: 90 },
+      // Cụm bàn làm việc số 2 (Product & Design Pod)
+      { x: 440, y: 195, width: 220, height: 90 },
+      // Cụm bàn làm việc số 3 (Quality & Ops Pod)
+      { x: 110, y: 335, width: 220, height: 90 },
+      // Khu vực Bàn họp & Thuyết trình chiến lược (Ảnh 2 & 3)
+      { x: 440, y: 335, width: 220, height: 95 }
     ],
     interactiveZones: [
       {
@@ -255,31 +259,51 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
       {
         id: 'office_ceo_desk',
         name: 'Bàn Làm Việc Của CEO',
-        x: 100,
+        x: 90,
         y: 60,
-        width: 100,
-        height: 70,
+        width: 120,
+        height: 80,
         prompt: 'Nhấn [E] để điều hành doanh nghiệp (Quản lý dự án / Nhân sự / Tài chính)',
         actionType: 'OPEN_COMPANY_MENU'
       },
       {
         id: 'office_coffee',
-        name: 'Máy Pha Cà Phê Pantry',
-        x: 620,
-        y: 60,
-        width: 100,
-        height: 60,
-        prompt: 'Nhấn [E] uống cà phê giải tỏa căng thẳng',
+        name: 'Máy Pha Cà Phê & Cây Nước Pantry',
+        x: 580,
+        y: 55,
+        width: 150,
+        height: 75,
+        prompt: 'Nhấn [E] uống cà phê giải tỏa căng thẳng (+20 Năng Lượng)',
         actionType: 'USE_COFFEE'
       },
       {
         id: 'office_whiteboard',
         name: 'Bảng Kanban & Chiến Lược Sprint',
         x: 320,
-        y: 10,
-        width: 140,
-        height: 65,
+        y: 4,
+        width: 150,
+        height: 60,
         prompt: 'Nhấn [E] xem Bảng Kanban & Điều chỉnh Chiến lược Sprint',
+        actionType: 'OPEN_PROJECTS'
+      },
+      {
+        id: 'office_meeting_table',
+        name: 'Bàn Họp & Thuyết Trình Tăng Trưởng',
+        x: 450,
+        y: 335,
+        width: 200,
+        height: 95,
+        prompt: 'Nhấn [E] họp bàn chiến lược dự án & phân công nhân sự',
+        actionType: 'OPEN_PROJECTS'
+      },
+      {
+        id: 'office_copier',
+        name: 'Máy In & Photocopy Hồ Sơ Hợp Đồng',
+        x: 38,
+        y: 345,
+        width: 50,
+        height: 70,
+        prompt: 'Nhấn [E] in ấn hồ sơ thầu & hợp đồng công nghệ',
         actionType: 'OPEN_PROJECTS'
       }
     ],
