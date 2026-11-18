@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { GameStateManager } from '../engine/core/GameStateManager';
+import { QuestManager } from '../engine/narrative/QuestManager';
 import {
   Calendar,
   Clock,
@@ -46,6 +47,17 @@ export const HUD: React.FC<HUDProps> = ({ gsm }) => {
 
   const formattedCash = gsm.playerStats.cash.toLocaleString('vi-VN');
   const weatherIcon = gsm.timeManager.weather === 'RAIN' ? '🌧️' : gsm.timeManager.weather === 'OVERCAST' ? '☁️' : '☀️';
+
+  const currentQuest = QuestManager.getCurrentQuest(
+    gsm.isRegistered,
+    gsm.currentOfficeId,
+    gsm.furniture.some((f) => f.purchased),
+    gsm.employees.length,
+    gsm.activeProjects.length,
+    gsm.completedProjectsCount,
+    gsm.romance.datingHistory.length,
+    gsm.playerStats.cash
+  );
 
   return (
     <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none flex flex-col gap-2 z-20">
@@ -169,6 +181,24 @@ export const HUD: React.FC<HUDProps> = ({ gsm }) => {
           </button>
         </div>
 
+      </div>
+
+      {/* Floating Quest Tracker */}
+      <div className="self-start bg-slate-900/90 backdrop-blur-md border border-amber-500/60 rounded-xl p-3 shadow-xl max-w-sm pointer-events-auto text-xs space-y-1.5 animate-fadeIn">
+        <div className="flex items-center justify-between text-amber-400 font-extrabold uppercase tracking-wider text-[10px]">
+          <span>{currentQuest.chapterTitle}</span>
+          <span className="bg-amber-950 px-1.5 py-0.5 rounded border border-amber-600/40 text-[9px]">Chỉ Dẫn</span>
+        </div>
+        <h4 className="font-bold text-slate-100 flex items-center gap-1.5 text-xs">
+          <span>🎯</span>
+          <span>{currentQuest.title}</span>
+        </h4>
+        <p className="text-slate-300 text-[11px] leading-relaxed">
+          {currentQuest.targetHint}
+        </p>
+        <div className="text-[10px] text-emerald-400 font-medium pt-1 border-t border-slate-800">
+          🎁 {currentQuest.rewardText}
+        </div>
       </div>
 
       {/* Thông tin vị trí & Hướng dẫn điều khiển thu gọn */}

@@ -78,10 +78,15 @@ export interface EmployeeAIEntity {
   ceoTrust: number;       // Niềm tin vào CEO (0 - 100)
   ambition: number;       // Tham vọng thăng tiến (0 - 100)
   
-  // Trạng thái hoạt động
+  // Trạng thái hoạt động & Tọa độ di chuyển thực tế trong văn phòng
   currentState: CharacterAnimationState;
   deskIndex: number;      // Bàn làm việc được gán trong văn phòng (-1 nếu chưa có)
   assignedProjectId: string | null;
+  currentPos?: Position2D; // Tọa độ X, Y thực tế đang đứng
+  targetPos?: Position2D;  // Tọa độ X, Y đang hướng tới
+  speechBubble?: string | null; // Lời nói hoặc suy nghĩ hiển thị trên đầu
+  speechTimer?: number;    // Thời gian hiển thị bong bóng thoại (giây)
+  walkFrame?: number;      // Frame bước đi Chibi
   
   // Hành vi khủng hoảng
   isStriking: boolean;    // Đang đình công

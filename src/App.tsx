@@ -14,6 +14,7 @@ import { ProjectTenderModal } from './ui/ProjectTenderModal';
 import { BankModal } from './ui/BankModal';
 import { DynamicEventModal } from './ui/DynamicEventModal';
 import { SaveMenuModal } from './ui/SaveMenuModal';
+import { EmployeeReviewModal } from './ui/EmployeeReviewModal';
 import { soundManager } from './engine/core/SoundManager';
 
 export const App: React.FC = () => {
@@ -133,6 +134,22 @@ export const App: React.FC = () => {
     const worldTargetX = clickScreenX + camX;
     const worldTargetY = clickScreenY + camY;
 
+    // Kiểm tra tương tác click trực tiếp vào nhân viên trong văn phòng
+    if (gsm.currentSceneId === 'OFFICE') {
+      const clickedEmp = gsm.employees.find((emp) => {
+        const posX = emp.currentPos ? emp.currentPos.x : 0;
+        const posY = emp.currentPos ? emp.currentPos.y : 0;
+        return Math.hypot(worldTargetX - posX, worldTargetY - posY) < 28;
+      });
+
+      if (clickedEmp) {
+        gsm.selectedEmployeeFor1on1 = clickedEmp;
+        soundManager.playClick();
+        gsm.notify();
+        return;
+      }
+    }
+
     gsm.playerController.moveToTarget(worldTargetX, worldTargetY, gsm.currentScene);
   };
 
@@ -214,6 +231,18 @@ export const App: React.FC = () => {
       {/* 8. Cửa Sổ Sự Kiện Động */}
       {gsm.currentActiveEvent !== null && (
         <DynamicEventModal gsm={gsm} event={gsm.currentActiveEvent} />
+      )}
+
+      {/* 9. Đối Thoại & Đánh Giá Nhân Sự 1-1 */}
+      {gsm.selectedEmployeeFor1on1 !== null && (
+        <EmployeeReviewModal
+          gsm={gsm}
+          employee={gsm.selectedEmployeeFor1on1}
+          onClose={() => {
+            gsm.selectedEmployeeFor1on1 = null;
+            gsm.notify();
+          }}
+        />
       )}
     </div>
   );

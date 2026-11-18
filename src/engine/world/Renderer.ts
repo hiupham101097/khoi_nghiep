@@ -24,6 +24,7 @@ export interface RenderableEntity {
   outfitColor?: string;
   hasGlasses?: boolean;
   statusIcon?: string;
+  speechBubble?: string | null;
   walkFrame?: number;
 }
 
@@ -738,6 +739,40 @@ export class WorldRenderer {
       const floatBob = Math.sin(tick * 8) * 3;
       ctx.font = '12px sans-serif';
       ctx.fillText(emote, 12, headY - 22 + floatBob);
+    }
+
+    // 10. Speech Bubble (Bong bóng thoại hội thoại thực tế của nhân viên)
+    if (entity.speechBubble) {
+      ctx.save();
+      ctx.font = 'bold 9px sans-serif';
+      const bubbleTextWidth = ctx.measureText(entity.speechBubble).width;
+      const bW = bubbleTextWidth + 14;
+      const bH = 18;
+      const bX = -bW / 2;
+      const bY = headY - 44;
+
+      // Hộp bong bóng trắng bo viền xanh/cam
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bX, bY, bW, bH, 5);
+      ctx.fill();
+      ctx.stroke();
+
+      // Đuôi nhọn trỏ vào đầu
+      ctx.beginPath();
+      ctx.moveTo(-4, bY + bH);
+      ctx.lineTo(0, bY + bH + 4);
+      ctx.lineTo(4, bY + bH);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      ctx.stroke();
+
+      // Text bên trong bong bóng
+      ctx.fillStyle = '#0f172a';
+      ctx.fillText(entity.speechBubble, bX + 7, bY + 12);
+      ctx.restore();
     }
 
     ctx.restore();

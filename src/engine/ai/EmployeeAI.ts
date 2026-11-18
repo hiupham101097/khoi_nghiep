@@ -133,6 +133,114 @@ export class EmployeeAIEngine {
     return { crisisAlert, workContribution, bugsGenerated };
   }
 
+  // Cập nhật vị trí di chuyển và lời thoại tự động trong văn phòng (Autonomous Realism)
+  public static updateMovementAndDialogue(
+    employee: EmployeeAIEntity,
+    deltaTime: number,
+    deskPos: { x: number; y: number },
+    coffeePos: { x: number; y: number },
+    loungePos: { x: number; y: number },
+    exitPos: { x: number; y: number },
+    isWorkHour: boolean,
+    isLunch: boolean,
+    isOT: boolean
+  ) {
+    if (!employee.currentPos) {
+      employee.currentPos = { ...exitPos };
+    }
+    if (!employee.targetPos) {
+      employee.targetPos = { ...deskPos };
+    }
+
+    // 1. Quản lý đồng hồ hiển thị lời thoại
+    if (employee.speechTimer && employee.speechTimer > 0) {
+      employee.speechTimer -= deltaTime;
+      if (employee.speechTimer <= 0) {
+        employee.speechBubble = null;
+      }
+    }
+
+    // 2. Xác định đích đến theo lịch trình và tâm lý
+    if (employee.isStriking) {
+      // Khi đình công: Di chuyển quanh khu vực trước bàn CEO hô khẩu hiệu
+      employee.targetPos = { x: 220 + (employee.deskIndex % 3) * 45, y: 150 };
+      if (!employee.speechBubble && Math.random() < 0.03) {
+        const strikeQuotes = [
+          'Yêu cầu đối thoại công bằng!',
+          'Phản đối tăng ca bóc lột!',
+          'Đình công đòi tăng lương!',
+          'CEO phải lắng nghe nhân viên!'
+        ];
+        employee.speechBubble = strikeQuotes[Math.floor(Math.random() * strikeQuotes.length)];
+        employee.speechTimer = 4;
+      }
+    } else if (isLunch) {
+      // Giờ trưa: Ra khu pantry / bàn trà tán gẫu
+      employee.targetPos = { x: loungePos.x + (employee.deskIndex % 2) * 35, y: loungePos.y + (employee.deskIndex > 1 ? 25 : 0) };
+      if (!employee.speechBubble && Math.random() < 0.02) {
+        const lunchQuotes = [
+          'Trưa nay ăn bún bò hay cơm tấm?',
+          'Vừa tìm được quán cà phê ngon gần đây',
+          'Dự án này chạy deadline căng phết nhỉ',
+          'Nghỉ ngơi tí lấy lại năng lượng code'
+        ];
+        employee.speechBubble = lunchQuotes[Math.floor(Math.random() * lunchQuotes.length)];
+        employee.speechTimer = 3.5;
+      }
+    } else if (isWorkHour || isOT) {
+      // Giờ làm việc: Ngồi tại bàn code
+      employee.targetPos = { ...deskPos };
+
+      // Thỉnh thoảng phát biểu suy nghĩ về công việc
+      if (!employee.speechBubble && Math.random() < 0.015) {
+        let roleQuotes: string[] = [];
+        if (employee.stress > 70) {
+          roleQuotes = ['Stress quá trời ơi...', 'Bug này khoai vãi chưởng', 'Cần 1 ly cà phê gấp...', 'Mong sếp duyệt tăng lương'];
+        } else if (employee.role === 'FRONTEND') {
+          roleQuotes = ['CSS flexbox chạy mượt rồi!', 'Tối ưu lại re-render React', 'Xong UI rồi, gửi test thôi sếp!'];
+        } else if (employee.role === 'BACKEND') {
+          roleQuotes = ['Database query dưới 30ms!', 'Bảo mật token JWT chuẩn chỉnh', 'API này chạy nuột lắm'];
+        } else if (employee.role === 'DESIGNER') {
+          roleQuotes = ['Palette màu này sang xịn mịn', 'Xong prototype Figma rồi', 'Vẽ thêm icon cho app'];
+        } else if (employee.role === 'TESTER') {
+          roleQuotes = ['Bắt được 1 bug logic rồi nè!', 'Kiểm thử regression test pass', 'Test kỹ trước khi demo'];
+        } else {
+          roleQuotes = ['Đang họp review sprint', 'Chuẩn bị tài liệu bàn giao'];
+        }
+        employee.speechBubble = roleQuotes[Math.floor(Math.random() * roleQuotes.length)];
+        employee.speechTimer = 3;
+      }
+    } else {
+      // Hết giờ làm: Di chuyển ra cửa về nhà
+      employee.targetPos = { ...exitPos };
+    }
+
+    // 3. Di chuyển vật lý từng frame về targetPos
+    const dx = employee.targetPos.x - employee.currentPos.x;
+    const dy = employee.targetPos.y - employee.currentPos.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance > 4) {
+      const moveSpeed = 75 * deltaTime; // Tốc độ bước đi tự nhiên
+      employee.currentPos.x += (dx / distance) * moveSpeed;
+      employee.currentPos.y += (dy / distance) * moveSpeed;
+      employee.currentState = 'WALK';
+    } else {
+      // Đã tới vị trí
+      if (employee.isStriking) {
+        employee.currentState = 'PROTEST';
+      } else if (isLunch) {
+        employee.currentState = 'TALK';
+      } else if (isWorkHour || isOT) {
+        if (employee.energy <= 15) employee.currentState = 'TIRED';
+        else if (employee.stress >= 80) employee.currentState = 'STRESSED';
+        else employee.currentState = 'WORK';
+      } else {
+        employee.currentState = 'IDLE';
+      }
+    }
+  }
+
   // CEO tương tác tích cực: Thưởng nóng, tâm sự, tăng lương
   public static rewardEmployee(employee: EmployeeAIEntity, bonusAmount: number): { happinessGain: number; trustGain: number } {
     const happinessGain = Math.min(35, Math.floor(bonusAmount / 500000) * 4);

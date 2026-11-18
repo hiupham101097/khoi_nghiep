@@ -81,6 +81,7 @@ export class GameStateManager {
   public isOfficeModalOpen: boolean = false;
   public isBankModalOpen: boolean = false;
   public isSaveMenuOpen: boolean = false;
+  public selectedEmployeeFor1on1: EmployeeAIEntity | null = null;
 
   // Listeners cập nhật UI React
   private changeListeners: (() => void)[] = [];
@@ -125,7 +126,33 @@ export class GameStateManager {
         this.handleZoneInteraction(zone);
       });
 
-      // 3. Kiểm tra điều kiện Ending tức thì
+      // 3. Cập nhật chuyển động tự hành & suy nghĩ thoại cho nhân viên AI trong văn phòng
+      if (this.currentSceneId === 'OFFICE') {
+        const isWorkHour = this.timeManager.isWorkHour();
+        const isLunch = this.timeManager.isLunchHour();
+        const isOT = this.isOvertimeActive && this.timeManager.isOvertimeHour();
+
+        const coffeePos = { x: 620, y: 90 };
+        const loungePos = { x: 500, y: 370 };
+        const exitPos = { x: 380, y: 480 };
+
+        this.employees.forEach((emp, idx) => {
+          const deskPos = this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
+          EmployeeAIEngine.updateMovementAndDialogue(
+            emp,
+            deltaTime,
+            deskPos,
+            coffeePos,
+            loungePos,
+            exitPos,
+            isWorkHour,
+            isLunch,
+            isOT
+          );
+        });
+      }
+
+      // 4. Kiểm tra điều kiện Ending tức thì
       const potentialEnding = EndingManager.evaluateEnding(this.exportState(1));
       if (potentialEnding) {
         this.triggerEnding(potentialEnding);
@@ -370,19 +397,64 @@ export class GameStateManager {
     if (this.currentSceneId === 'OFFICE') {
       this.employees.forEach((emp, idx) => {
         const deskPos = this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
+        const posX = emp.currentPos ? emp.currentPos.x : deskPos.x;
+        const posY = emp.currentPos ? emp.currentPos.y : deskPos.y;
+
         list.push({
           id: emp.id,
           name: emp.name,
-          x: deskPos.x,
-          y: deskPos.y,
+          x: posX,
+          y: posY,
           direction: 'DOWN',
           animationState: emp.currentState,
           roleType: 'EMPLOYEE',
           gender: emp.gender,
           hasGlasses: emp.role === 'BACKEND' || emp.role === 'TESTER',
-          outfitColor: emp.role === 'DESIGNER' ? '#ec4899' : emp.role === 'FRONTEND' ? '#3b82f6' : '#10b981'
+          outfitColor: emp.role === 'DESIGNER' ? '#ec4899' : emp.role === 'FRONTEND' ? '#3b82f6' : '#10b981',
+          speechBubble: emp.speechBubble
         });
       });
+    }
+
+    // 2b. Người đi đường & Cư dân đô thị (Khi ở ngoài phố)
+    if (this.currentSceneId === 'CITY') {
+      list.push(
+        {
+          id: 'npc_citizen_1',
+          name: 'Anh Nam (Dev Freelance)',
+          x: 230,
+          y: 490,
+          direction: 'RIGHT',
+          animationState: 'WORK',
+          roleType: 'CITIZEN',
+          outfitColor: '#475569',
+          statusIcon: '☕',
+          speechBubble: 'StartUp giờ khó gọi vốn quá'
+        },
+        {
+          id: 'npc_citizen_2',
+          name: 'Cô Mai (Quán Trà Đá)',
+          x: 140,
+          y: 505,
+          direction: 'DOWN',
+          animationState: 'IDLE',
+          roleType: 'CITIZEN',
+          gender: 'FEMALE',
+          outfitColor: '#ea580c',
+          speechBubble: 'Làm ly trà đá 5 ngàn cháu ơi!'
+        },
+        {
+          id: 'npc_citizen_3',
+          name: 'Hoàng (Shipper Công Nghệ)',
+          x: 580,
+          y: 430,
+          direction: 'LEFT',
+          animationState: 'WALK',
+          roleType: 'CITIZEN',
+          outfitColor: '#16a34a',
+          speechBubble: 'Đơn giao tòa Bitexco'
+        }
+      );
     }
 
     // 3. Lan Anh ở quán Cà Phê hoặc Biệt thự

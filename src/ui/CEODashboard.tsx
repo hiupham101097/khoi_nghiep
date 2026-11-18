@@ -367,6 +367,18 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                       <div className="flex items-center gap-2 mt-4 pt-3 border-t border-slate-700/60">
                         <button
                           onClick={() => {
+                            gsm.selectedEmployeeFor1on1 = emp;
+                            gsm.openDashboardTab = null;
+                            soundManager.playClick();
+                            gsm.notify();
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded font-semibold transition cursor-pointer"
+                        >
+                          Trò Chuyện 1-1
+                        </button>
+
+                        <button
+                          onClick={() => {
                             if (gsm.playerStats.cash < 2000000) {
                               alert('Không đủ tiền mặt để thưởng nóng (Cần 2 triệu VNĐ)!');
                               return;
