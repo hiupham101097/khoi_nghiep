@@ -1,0 +1,189 @@
+// ============================================================================
+// CEO EMPIRE: HEADS-UP DISPLAY (HUD)
+// ============================================================================
+
+import React from 'react';
+import { GameStateManager } from '../engine/core/GameStateManager';
+import {
+  Calendar,
+  Clock,
+  DollarSign,
+  Heart,
+  Zap,
+  Award,
+  Briefcase,
+  MapPin,
+  Save,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  FastForward
+} from 'lucide-react';
+import { soundManager } from '../engine/core/SoundManager';
+
+interface HUDProps {
+  gsm: GameStateManager;
+}
+
+export const HUD: React.FC<HUDProps> = ({ gsm }) => {
+  const isMuted = soundManager.getIsMuted();
+  const timeSpeed = gsm.timeManager.timeSpeed;
+
+  const toggleMute = () => {
+    soundManager.setMuted(!isMuted);
+    gsm.notify();
+  };
+
+  const cycleSpeed = () => {
+    if (timeSpeed === 1) gsm.timeManager.timeSpeed = 2;
+    else if (timeSpeed === 2) gsm.timeManager.timeSpeed = 5;
+    else if (timeSpeed === 5) gsm.timeManager.timeSpeed = 0;
+    else gsm.timeManager.timeSpeed = 1;
+    soundManager.playClick();
+    gsm.notify();
+  };
+
+  const formattedCash = gsm.playerStats.cash.toLocaleString('vi-VN');
+  const weatherIcon = gsm.timeManager.weather === 'RAIN' ? '🌧️' : gsm.timeManager.weather === 'OVERCAST' ? '☁️' : '☀️';
+
+  return (
+    <div className="absolute top-0 left-0 right-0 p-3 pointer-events-none flex flex-col gap-2 z-20">
+      {/* Top Bar Card */}
+      <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-2xl p-2.5 px-4 flex flex-wrap items-center justify-between pointer-events-auto gap-3 text-slate-100">
+        
+        {/* Thời gian & Thời tiết */}
+        <div className="flex items-center gap-4 border-r border-slate-700/60 pr-4">
+          <div className="flex items-center gap-2 text-sky-400 font-semibold text-sm">
+            <Calendar className="w-4 h-4" />
+            <span>Ngày {gsm.timeManager.day} / Th.{gsm.timeManager.month} (Năm {gsm.timeManager.year})</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 text-amber-400 font-mono text-sm font-bold bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700">
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span>{gsm.timeManager.getFormattedTime()}</span>
+            <span className="text-xs ml-1" title="Thời tiết">{weatherIcon}</span>
+          </div>
+
+          {/* Nút điều chỉnh tốc độ */}
+          <button
+            onClick={cycleSpeed}
+            className="flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-sky-300 px-2 py-1 rounded border border-slate-600 transition"
+            title="Đổi tốc độ thời gian [P]"
+          >
+            {timeSpeed === 0 ? <Pause className="w-3 h-3 text-rose-400" /> : timeSpeed === 1 ? <Play className="w-3 h-3 text-emerald-400" /> : <FastForward className="w-3 h-3 text-amber-400" />}
+            <span className="font-bold">{timeSpeed === 0 ? 'Tạm Dừng' : `${timeSpeed}x`}</span>
+          </button>
+        </div>
+
+        {/* Số dư Tiền mặt (Cash Flow) */}
+        <div className="flex items-center gap-2 bg-emerald-950/70 border border-emerald-500/40 px-3.5 py-1.5 rounded-lg shadow-inner">
+          <DollarSign className="w-5 h-5 text-emerald-400" />
+          <div className="flex flex-col">
+            <span className="text-[10px] text-emerald-300 font-medium uppercase tracking-wider">Tiền Mặt Khởi Nghiệp</span>
+            <span className="font-mono font-extrabold text-emerald-400 text-base leading-tight">
+              {formattedCash} <span className="text-xs font-normal">VNĐ</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Năng lượng & Sức khỏe CEO */}
+        <div className="flex items-center gap-4 border-l border-slate-700/60 pl-4">
+          <div className="flex items-center gap-1.5" title="Năng lượng CEO">
+            <Zap className="w-4 h-4 text-amber-400" />
+            <div className="w-20 bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+              <div
+                className="bg-gradient-to-r from-amber-500 to-yellow-300 h-full transition-all duration-300"
+                style={{ width: `${gsm.playerStats.energy}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono font-bold text-amber-300">{gsm.playerStats.energy}%</span>
+          </div>
+
+          <div className="flex items-center gap-1.5" title="Sức khỏe CEO">
+            <Heart className="w-4 h-4 text-rose-500" />
+            <div className="w-20 bg-slate-800 h-2.5 rounded-full overflow-hidden border border-slate-700">
+              <div
+                className="bg-gradient-to-r from-rose-500 to-red-400 h-full transition-all duration-300"
+                style={{ width: `${gsm.playerStats.health}%` }}
+              />
+            </div>
+            <span className="text-xs font-mono font-bold text-rose-300">{gsm.playerStats.health}%</span>
+          </div>
+
+          <div className="flex items-center gap-1.5 bg-sky-950/50 border border-sky-600/40 px-2 py-0.5 rounded text-sky-300 text-xs font-semibold" title="Uy tín thương trường">
+            <Award className="w-3.5 h-3.5 text-sky-400" />
+            <span>Uy tín: {gsm.playerStats.reputation}</span>
+          </div>
+        </div>
+
+        {/* Các nút bấm điều hướng nhanh */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              gsm.openDashboardTab = 'OVERVIEW';
+              soundManager.playClick();
+              gsm.notify();
+            }}
+            className="flex items-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-md hover:shadow-sky-500/20 transition cursor-pointer"
+            title="Mở Bảng Điều Hành Doanh Nghiệp [TAB]"
+          >
+            <Briefcase className="w-4 h-4" />
+            <span>CEO Suite [TAB]</span>
+          </button>
+
+          <button
+            onClick={() => {
+              // Chuyển nhanh giữa đường phố và văn phòng
+              if (gsm.currentSceneId === 'CITY') {
+                gsm.switchScene('OFFICE');
+              } else {
+                gsm.switchScene('CITY');
+              }
+            }}
+            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
+            title="Chuyển địa điểm"
+          >
+            <MapPin className="w-3.5 h-3.5 text-teal-400" />
+            <span>{gsm.currentSceneId === 'CITY' ? 'Vào Văn Phòng' : 'Ra Phố'}</span>
+          </button>
+
+          <button
+            onClick={() => {
+              gsm.isSaveMenuOpen = true;
+              soundManager.playClick();
+              gsm.notify();
+            }}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 p-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
+            title="Lưu / Tải Game [ESC]"
+          >
+            <Save className="w-4 h-4 text-emerald-400" />
+          </button>
+
+          <button
+            onClick={toggleMute}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 p-1.5 rounded-lg border border-slate-700 transition cursor-pointer"
+            title="Bật / Tắt Âm Thanh"
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          </button>
+        </div>
+
+      </div>
+
+      {/* Thông tin vị trí & Hướng dẫn điều khiển thu gọn */}
+      <div className="flex items-center justify-between text-[11px] text-slate-300 bg-slate-900/70 backdrop-blur-sm px-3 py-1 rounded-lg border border-slate-800 self-start pointer-events-auto gap-4">
+        <div>
+          <span className="text-sky-400 font-semibold">Vị Trí:</span> {gsm.currentScene.name}
+        </div>
+        <div className="text-slate-400 flex items-center gap-2">
+          <span>Di chuyển: <kbd className="bg-slate-800 px-1 py-0.5 rounded text-sky-300 font-mono">WASD</kbd> / <kbd className="bg-slate-800 px-1 py-0.5 rounded text-sky-300 font-mono">Mũi Tên</kbd></span>
+          <span>|</span>
+          <span>Tương tác: <kbd className="bg-slate-800 px-1 py-0.5 rounded text-amber-300 font-mono">[E]</kbd> hoặc <kbd className="bg-slate-800 px-1 py-0.5 rounded text-amber-300 font-mono">[Space]</kbd></span>
+          <span>|</span>
+          <span>Chạy nhanh: <kbd className="bg-slate-800 px-1 py-0.5 rounded text-emerald-300 font-mono">Shift</kbd></span>
+        </div>
+      </div>
+    </div>
+  );
+};
