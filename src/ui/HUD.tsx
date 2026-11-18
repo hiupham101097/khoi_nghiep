@@ -19,15 +19,21 @@ import {
   VolumeX,
   Play,
   Pause,
-  FastForward
+  FastForward,
+  TrendingDown,
+  AlertOctagon,
+  ShieldAlert
 } from 'lucide-react';
 import { soundManager } from '../engine/core/SoundManager';
+import { AVAILABLE_OFFICES, ENTERPRISE_STAGES } from '../engine/economy/CompanyManager';
+import { EconomyManager } from '../engine/economy/EconomyManager';
 
 interface HUDProps {
   gsm: GameStateManager;
+  onOpenPetition?: () => void;
 }
 
-export const HUD: React.FC<HUDProps> = ({ gsm }) => {
+export const HUD: React.FC<HUDProps> = ({ gsm, onOpenPetition }) => {
   const isMuted = soundManager.getIsMuted();
   const timeSpeed = gsm.timeManager.timeSpeed;
 
@@ -47,6 +53,16 @@ export const HUD: React.FC<HUDProps> = ({ gsm }) => {
 
   const formattedCash = gsm.playerStats.cash.toLocaleString('vi-VN');
   const weatherIcon = gsm.timeManager.weather === 'RAIN' ? '🌧️' : gsm.timeManager.weather === 'OVERCAST' ? '☁️' : '☀️';
+
+  const currentOffice = AVAILABLE_OFFICES.find((o) => o.id === gsm.currentOfficeId) || null;
+  const monthlyBurnRate = EconomyManager.calculateMonthlyBurnRate(
+    gsm.employees,
+    currentOffice,
+    gsm.furniture,
+    gsm.loans
+  );
+  const runwayMonths = EconomyManager.calculateRunwayMonths(gsm.playerStats.cash, monthlyBurnRate);
+  const stageData = ENTERPRISE_STAGES[gsm.enterpriseStage];
 
   const currentQuest = QuestManager.getCurrentQuest(
     gsm.isRegistered,
@@ -88,16 +104,61 @@ export const HUD: React.FC<HUDProps> = ({ gsm }) => {
           </button>
         </div>
 
-        {/* Số dư Tiền mặt (Cash Flow) */}
-        <div className="flex items-center gap-2 bg-emerald-950/70 border border-emerald-500/40 px-3.5 py-1.5 rounded-lg shadow-inner">
-          <DollarSign className="w-5 h-5 text-emerald-400" />
-          <div className="flex flex-col">
-            <span className="text-[10px] text-emerald-300 font-medium uppercase tracking-wider">Tiền Mặt Khởi Nghiệp</span>
-            <span className="font-mono font-extrabold text-emerald-400 text-base leading-tight">
-              {formattedCash} <span className="text-xs font-normal">VNĐ</span>
-            </span>
+        {/* Cấp Giai đoạn Doanh nghiệp (Enterprise Stage Badge) */}
+        <button
+          onClick={() => {
+            gsm.openDashboardTab = 'OVERVIEW';
+            soundManager.playClick();
+            gsm.notify();
+          }}
+          className="flex items-center gap-1.5 bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-500/40 px-2.5 py-1.5 rounded-lg text-indigo-300 text-xs font-semibold cursor-pointer transition shadow-sm"
+          title={`Giai đoạn: ${stageData.name} - ${stageData.title}. Nhấn để mở Dashboard.`}
+        >
+          <span className="text-amber-400 font-black">Cấp {stageData.level}:</span>
+          <span>{stageData.name}</span>
+        </button>
+
+        {/* Số dư Tiền mặt & Runway tháng */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 bg-emerald-950/70 border border-emerald-500/40 px-3 py-1.5 rounded-lg shadow-inner">
+            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <div className="flex flex-col">
+              <span className="text-[9px] text-emerald-300 font-medium uppercase tracking-wider">Tiền Mặt</span>
+              <span className="font-mono font-extrabold text-emerald-400 text-sm leading-tight">
+                {formattedCash} <span className="text-[10px] font-normal">đ</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Runway tồn tại */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono font-bold shadow-inner ${
+              runwayMonths > 6
+                ? 'bg-slate-900/80 border-slate-700 text-slate-300'
+                : runwayMonths >= 3
+                ? 'bg-amber-950/80 border-amber-600/50 text-amber-300'
+                : 'bg-rose-950/90 border-rose-600/80 text-rose-300 animate-pulse'
+            }`}
+            title={`Burn rate: ~${monthlyBurnRate.toLocaleString('vi-VN')} đ/tháng. Runway: ${runwayMonths} tháng.`}
+          >
+            <TrendingDown className="w-3.5 h-3.5 text-slate-400" />
+            <span>Runway: {runwayMonths > 99 ? '∞' : `${runwayMonths} th`}</span>
           </div>
         </div>
+
+        {/* Nút báo động Khủng hoảng Kiến Nghị nếu có */}
+        {gsm.activePetition && (
+          <button
+            onClick={() => {
+              if (onOpenPetition) onOpenPetition();
+            }}
+            className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg animate-bounce border border-rose-400 shadow-lg cursor-pointer"
+            title="Nhấn để mở bàn đàm phán giải quyết khủng hoảng"
+          >
+            <ShieldAlert className="w-4 h-4 text-white" />
+            <span>KIẾN NGHỊ ({gsm.activePetition.daysRemaining} ngày)</span>
+          </button>
+        )}
 
         {/* Năng lượng & Sức khỏe CEO */}
         <div className="flex items-center gap-4 border-l border-slate-700/60 pl-4">

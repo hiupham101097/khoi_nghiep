@@ -179,6 +179,73 @@ class SoundManager {
     });
   }
 
+  // Tiếng búa thẩm phán gõ vang dội trong phiên tòa (Gavel Strike)
+  public playGavelStrike() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+
+    // Tiếng gõ gỗ đanh
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
+
+    gain.gain.setValueAtTime(0.35, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+
+    // Dư âm trầm vang (Wood resonance)
+    const subOsc = this.ctx.createOscillator();
+    const subGain = this.ctx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(80, now);
+    subOsc.frequency.exponentialRampToValueAtTime(20, now + 0.5);
+
+    subGain.gain.setValueAtTime(0.25, now);
+    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.ctx.destination);
+
+    subOsc.start(now);
+    subOsc.stop(now + 0.5);
+  }
+
+  // Chuông bắt đầu họp Daily Standup 09:00 sáng
+  public playStandupBell() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    const now = this.ctx.currentTime;
+    [1046.50, 1318.51].forEach((freq, idx) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      const t = now + idx * 0.1;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+
+      osc.start(t);
+      osc.stop(t + 0.45);
+    });
+  }
+
   // Tiếng click nút UI
   public playClick() {
     if (this.isMuted) return;

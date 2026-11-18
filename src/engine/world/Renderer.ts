@@ -7,7 +7,8 @@ import {
   CharacterDirection,
   DayTimePeriod,
   WeatherType,
-  Position2D
+  Position2D,
+  FloatingText
 } from '../../types';
 import { MapSceneConfig } from './WorldData';
 
@@ -64,7 +65,10 @@ export class WorldRenderer {
     ambientLight: { r: number; g: number; b: number; alpha: number },
     timePeriod: DayTimePeriod,
     activePrompt: string | null,
-    tick: number
+    tick: number,
+    floatingTexts: FloatingText[] = [],
+    sprintStrategy: string = 'BALANCED',
+    stageLevel: number = 1
   ) {
     const ctx = this.ctx;
     const width = this.canvas.width;
@@ -77,10 +81,10 @@ export class WorldRenderer {
     ctx.translate(-camera.x, -camera.y);
 
     // LỚP 0 & 1: Vẽ sàn / đường phố / nền bối cảnh
-    this.renderGroundAndDecor(scene, tick);
+    this.renderGroundAndDecor(scene, tick, sprintStrategy);
 
     // LỚP 2: Vẽ đồ nội thất & công trình cố định
-    this.renderBuildingsAndObstacles(scene, timePeriod);
+    this.renderBuildingsAndObstacles(scene, timePeriod, tick, stageLevel);
 
     // LỚP 3: Nhân vật & thực thể (Depth sorted theo trục Y)
     const sortedEntities = [...entities].sort((a, b) => a.y - b.y);
@@ -107,6 +111,11 @@ export class WorldRenderer {
     // LỚP 7: Vùng tương tác nổi bật
     this.renderInteractionZones(scene, tick);
 
+    // LỚP 7b: Floating Numbers & Text (+15M, -2M, Lên cấp)
+    if (floatingTexts.length > 0) {
+      this.renderFloatingTexts(floatingTexts);
+    }
+
     ctx.restore();
 
     // LỚP 8: Floating Action Prompt trên màn hình nếu có
@@ -115,7 +124,25 @@ export class WorldRenderer {
     }
   }
 
-  private renderGroundAndDecor(scene: MapSceneConfig, tick: number) {
+  private renderFloatingTexts(floatingTexts: FloatingText[]) {
+    const ctx = this.ctx;
+    ctx.save();
+    floatingTexts.forEach((ft) => {
+      ctx.globalAlpha = Math.max(0, Math.min(1, ft.alpha));
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+
+      // Drop shadow text
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
+
+      ctx.fillStyle = ft.color;
+      ctx.fillText(ft.text, ft.x, ft.y);
+    });
+    ctx.restore();
+  }
+
+  private renderGroundAndDecor(scene: MapSceneConfig, tick: number, sprintStrategy: string = 'BALANCED') {
     const ctx = this.ctx;
 
     if (scene.id === 'CITY') {
@@ -243,10 +270,39 @@ export class WorldRenderer {
 
       // Bảng trắng Kanban / Sprint burndown
       ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(320, 8, 120, 26);
-      ctx.fillStyle = '#2563eb';
-      ctx.font = '8px sans-serif';
-      ctx.fillText('SPRINT GOAL: 100% QUALITY', 325, 24);
+      ctx.fillRect(320, 6, 140, 28);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(320, 6, 140, 28);
+
+      // 3 Cột Kanban TODO - DOING - DONE
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(366, 9, 1, 22);
+      ctx.fillRect(413, 9, 1, 22);
+
+      // Sticky notes nhiều màu
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(328, 11, 10, 8);
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(342, 16, 10, 8);
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(375, 11, 10, 8);
+      ctx.fillStyle = '#4ade80'; ctx.fillRect(422, 11, 10, 8);
+      ctx.fillStyle = '#4ade80'; ctx.fillRect(438, 16, 10, 8);
+
+      // Strategy badge
+      let badgeText = 'BALANCED';
+      let badgeColor = '#2563eb';
+      if (sprintStrategy === 'QUALITY_FIRST') {
+        badgeText = 'QUALITY FIRST';
+        badgeColor = '#059669';
+      } else if (sprintStrategy === 'CRUNCH_SPEED') {
+        badgeText = 'CRUNCH SPEED';
+        badgeColor = '#dc2626';
+      } else if (sprintStrategy === 'REFACTOR_DEBT') {
+        badgeText = 'REFACTOR DEBT';
+        badgeColor = '#d97706';
+      }
+      ctx.fillStyle = badgeColor;
+      ctx.font = 'bold 7px sans-serif';
+      ctx.fillText(badgeText, 325, 31);
 
     } else if (scene.id === 'VILLA') {
       // Sàn đá hoa cương bóng loáng
@@ -299,7 +355,7 @@ export class WorldRenderer {
     }
   }
 
-  private renderBuildingsAndObstacles(scene: MapSceneConfig, timePeriod: DayTimePeriod) {
+  private renderBuildingsAndObstacles(scene: MapSceneConfig, timePeriod: DayTimePeriod, tick: number = 0, stageLevel: number = 1) {
     const ctx = this.ctx;
 
     if (scene.id === 'CITY') {
@@ -464,6 +520,32 @@ export class WorldRenderer {
       ctx.fillRect(620, 70, 30, 35); // Máy cà phê Espresso đỏ
       ctx.fillStyle = '#0284c7';
       ctx.fillRect(670, 65, 25, 45); // Bình nước nóng lạnh
+
+      // Vách kính ngăn phòng họp điều hành (Khi đạt Giai đoạn 2+)
+      if (stageLevel >= 2) {
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+        ctx.fillRect(235, 40, 8, 120);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(235, 40, 8, 120);
+      }
+
+      // Tủ máy chủ Server Rack góc phòng với LED nhấp nháy (Giai đoạn 3+)
+      if (stageLevel >= 3) {
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(710, 340, 42, 90);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(710, 340, 42, 90);
+        // Đèn LED nhấp nháy
+        for (let row = 0; row < 5; row++) {
+          const ledOn = Math.sin(tick * 8 + row) > 0;
+          ctx.fillStyle = ledOn ? '#22c55e' : '#15803d';
+          ctx.fillRect(718, 355 + row * 14, 5, 5);
+          ctx.fillStyle = ledOn ? '#38bdf8' : '#0369a1';
+          ctx.fillRect(732, 355 + row * 14, 5, 5);
+        }
+      }
 
     } else if (scene.id === 'VILLA') {
       // Bàn trà cẩm thạch

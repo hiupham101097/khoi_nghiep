@@ -6,7 +6,8 @@ import {
   EmployeeAIEntity,
   CandidateEntity,
   CharacterAnimationState,
-  ProjectContract
+  ProjectContract,
+  CollectivePetition
 } from '../../types';
 import { TimeManager } from '../core/TimeManager';
 import { soundManager } from '../core/SoundManager';
@@ -133,6 +134,31 @@ export class EmployeeAIEngine {
     return { crisisAlert, workContribution, bugsGenerated };
   }
 
+  // Khởi tạo các trường AI 2.0 (Mục tiêu cá nhân, Mạng lưới quan hệ, Hoạt động)
+  public static initAI2Fields(employee: EmployeeAIEntity) {
+    if (!employee.personalGoal) {
+      const goalPool: Array<{ type: NonNullable<EmployeeAIEntity['personalGoal']>['type']; title: string }> = [
+        { type: 'PROMOTION_LEAD', title: 'Thăng tiến lên Tech Lead / Quản lý nhóm' },
+        { type: 'SAVING_MONEY', title: 'Tích lũy quỹ cá nhân 50 triệu đồng' },
+        { type: 'LEARN_NEW_TECH', title: 'Làm chủ kiến trúc Microservices & AI' },
+        { type: 'WORK_LIFE_BALANCE', title: 'Duy trì cân bằng, tan làm đúng giờ' },
+        { type: 'EARN_ESOP', title: 'Nhận cổ phần ưu đãi ESOP của công ty' }
+      ];
+      const selected = goalPool[Math.abs(employee.avatarSeed) % goalPool.length];
+      employee.personalGoal = {
+        type: selected.type,
+        title: selected.title,
+        progress: 15 + Math.floor(Math.random() * 20)
+      };
+    }
+    if (!employee.colleagueRelations) {
+      employee.colleagueRelations = {};
+    }
+    if (!employee.dailyActivity) {
+      employee.dailyActivity = 'DEEP_WORK';
+    }
+  }
+
   // Cập nhật vị trí di chuyển và lời thoại tự động trong văn phòng (Autonomous Realism)
   public static updateMovementAndDialogue(
     employee: EmployeeAIEntity,
@@ -143,8 +169,11 @@ export class EmployeeAIEngine {
     exitPos: { x: number; y: number },
     isWorkHour: boolean,
     isLunch: boolean,
-    isOT: boolean
+    isOT: boolean,
+    isDailyStandup: boolean = false
   ) {
+    this.initAI2Fields(employee);
+
     if (!employee.currentPos) {
       employee.currentPos = { ...exitPos };
     }
@@ -163,19 +192,38 @@ export class EmployeeAIEngine {
     // 2. Xác định đích đến theo lịch trình và tâm lý
     if (employee.isStriking) {
       // Khi đình công: Di chuyển quanh khu vực trước bàn CEO hô khẩu hiệu
+      employee.dailyActivity = 'ON_STRIKE';
       employee.targetPos = { x: 220 + (employee.deskIndex % 3) * 45, y: 150 };
       if (!employee.speechBubble && Math.random() < 0.03) {
         const strikeQuotes = [
           'Yêu cầu đối thoại công bằng!',
           'Phản đối tăng ca bóc lột!',
-          'Đình công đòi tăng lương!',
-          'CEO phải lắng nghe nhân viên!'
+          'Đình công đòi quyền lợi!',
+          'CEO phải lắng nghe tiếng nói nhân viên!'
         ];
         employee.speechBubble = strikeQuotes[Math.floor(Math.random() * strikeQuotes.length)];
         employee.speechTimer = 4;
       }
+    } else if (isDailyStandup) {
+      // 09:00 - 09:30: Họp Daily Standup trước Bảng Whiteboard Kanban (380, 55)
+      employee.dailyActivity = 'DAILY_STANDUP';
+      const standupX = 320 + (employee.deskIndex % 6) * 26;
+      employee.targetPos = { x: standupX, y: 95 };
+
+      if (!employee.speechBubble && Math.random() < 0.025) {
+        const standupQuotes = [
+          'Standup 09h: Task hôm qua đã merge!',
+          'Hôm nay em xử lý nốt 2 bug tồn đọng',
+          'Sprint này team mình đang đi đúng tiến độ',
+          'Sắp deploy bản test cho QA kiểm thử rồi',
+          'Em đang refactor lại code cho sạch đẹp'
+        ];
+        employee.speechBubble = standupQuotes[Math.floor(Math.random() * standupQuotes.length)];
+        employee.speechTimer = 3.5;
+      }
     } else if (isLunch) {
       // Giờ trưa: Ra khu pantry / bàn trà tán gẫu
+      employee.dailyActivity = 'LUNCH_BONDING';
       employee.targetPos = { x: loungePos.x + (employee.deskIndex % 2) * 35, y: loungePos.y + (employee.deskIndex > 1 ? 25 : 0) };
       if (!employee.speechBubble && Math.random() < 0.02) {
         const lunchQuotes = [
@@ -189,6 +237,7 @@ export class EmployeeAIEngine {
       }
     } else if (isWorkHour || isOT) {
       // Giờ làm việc: Ngồi tại bàn code
+      employee.dailyActivity = isOT ? 'OVERTIME' : 'DEEP_WORK';
       employee.targetPos = { ...deskPos };
 
       // Thỉnh thoảng phát biểu suy nghĩ về công việc
@@ -212,6 +261,7 @@ export class EmployeeAIEngine {
       }
     } else {
       // Hết giờ làm: Di chuyển ra cửa về nhà
+      employee.dailyActivity = 'GOING_HOME';
       employee.targetPos = { ...exitPos };
     }
 
@@ -229,6 +279,8 @@ export class EmployeeAIEngine {
       // Đã tới vị trí
       if (employee.isStriking) {
         employee.currentState = 'PROTEST';
+      } else if (isDailyStandup) {
+        employee.currentState = 'TALK';
       } else if (isLunch) {
         employee.currentState = 'TALK';
       } else if (isWorkHour || isOT) {
@@ -239,6 +291,103 @@ export class EmployeeAIEngine {
         employee.currentState = 'IDLE';
       }
     }
+  }
+
+  // Cập nhật mạng lưới quan hệ xã hội & tiến độ mục tiêu cá nhân hàng ngày
+  public static updateSocialGraphAndPersonalGoals(
+    employees: EmployeeAIEntity[],
+    activeProjects: ProjectContract[],
+    isOvertimeActive: boolean
+  ) {
+    employees.forEach((emp) => {
+      this.initAI2Fields(emp);
+
+      // 1. Tương tác quan hệ đồng nghiệp
+      employees.forEach((other) => {
+        if (emp.id !== other.id) {
+          const currentRel = emp.colleagueRelations![other.id] || 50;
+
+          // Nếu cùng dự án, quan hệ tăng
+          const shareProject = activeProjects.some(
+            (p) => p.assignedEmployeeIds.includes(emp.id) && p.assignedEmployeeIds.includes(other.id)
+          );
+          if (shareProject) {
+            emp.colleagueRelations![other.id] = Math.min(100, currentRel + 1);
+          }
+
+          // Nếu đồng nghiệp thân thiết bị đối xử tệ hoặc đình công, lây lan ức chế
+          if (other.isStriking && currentRel >= 65) {
+            emp.resentment = Math.min(100, emp.resentment + 2);
+          }
+        }
+      });
+
+      // 2. Cập nhật tiến độ Mục tiêu cá nhân (Personal Goals)
+      if (emp.personalGoal) {
+        switch (emp.personalGoal.type) {
+          case 'PROMOTION_LEAD':
+            if (emp.quality >= 80 && emp.currentState === 'WORK') {
+              emp.personalGoal.progress = Math.min(100, emp.personalGoal.progress + 2);
+            }
+            break;
+          case 'SAVING_MONEY':
+            if (emp.currentSalary >= emp.expectedSalary) {
+              emp.personalGoal.progress = Math.min(100, emp.personalGoal.progress + 3);
+            }
+            break;
+          case 'LEARN_NEW_TECH':
+            if (emp.assignedProjectId) {
+              emp.personalGoal.progress = Math.min(100, emp.personalGoal.progress + 2.5);
+            }
+            break;
+          case 'WORK_LIFE_BALANCE':
+            if (!isOvertimeActive) {
+              emp.personalGoal.progress = Math.min(100, emp.personalGoal.progress + 3);
+            } else {
+              emp.personalGoal.progress = Math.max(0, emp.personalGoal.progress - 4);
+            }
+            break;
+          case 'EARN_ESOP':
+            if (emp.loyalty >= 80) {
+              emp.personalGoal.progress = Math.min(100, emp.personalGoal.progress + 1.5);
+            }
+            break;
+        }
+
+        // Đạt mốc 100% mục tiêu cá nhân
+        if (emp.personalGoal.progress >= 100 && !emp.memoryLog.includes('Đã đạt mục tiêu sự nghiệp cá nhân!')) {
+          emp.happiness = Math.min(100, emp.happiness + 25);
+          emp.loyalty = Math.min(100, emp.loyalty + 20);
+          emp.memoryLog.push('Đã đạt mục tiêu sự nghiệp cá nhân!');
+        }
+      }
+    });
+  }
+
+  // Kiểm tra điều kiện nảy sinh Đơn Kiến Nghị Tập Thể (Collective Petition)
+  public static checkForCollectivePetition(
+    employees: EmployeeAIEntity[],
+    isOvertimeActive: boolean
+  ): CollectivePetition | null {
+    // Tìm các nhân viên có mức ức chế cao (resentment >= 65 và ceoTrust <= 45)
+    const discontentEmployees = employees.filter(
+      (e) => !e.isStriking && !e.hasGivenNotice && e.resentment >= 65 && e.ceoTrust <= 45
+    );
+
+    if (discontentEmployees.length >= 2) {
+      const leader = discontentEmployees[0];
+      return {
+        id: `petition_${Date.now()}`,
+        message: `Tập thể ${discontentEmployees.length} nhân sự do ${leader.name} đại diện đệ trình Đơn Kiến Nghị Tập Thể: Phản đối áp lực kéo dài và yêu cầu cải thiện thu nhập!`,
+        salaryIncreaseDemandPercent: 15,
+        stopOvertimeDemand: isOvertimeActive,
+        signingEmployees: discontentEmployees.map((e) => e.id),
+        daysRemaining: 3,
+        status: 'PENDING'
+      };
+    }
+
+    return null;
   }
 
   // CEO tương tác tích cực: Thưởng nóng, tâm sự, tăng lương

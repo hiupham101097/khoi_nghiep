@@ -271,6 +271,16 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
         height: 60,
         prompt: 'Nhấn [E] uống cà phê giải tỏa căng thẳng',
         actionType: 'USE_COFFEE'
+      },
+      {
+        id: 'office_whiteboard',
+        name: 'Bảng Kanban & Chiến Lược Sprint',
+        x: 320,
+        y: 10,
+        width: 140,
+        height: 65,
+        prompt: 'Nhấn [E] xem Bảng Kanban & Điều chỉnh Chiến lược Sprint',
+        actionType: 'OPEN_PROJECTS'
       }
     ],
     deskPositions: [

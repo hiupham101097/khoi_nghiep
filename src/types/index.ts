@@ -88,11 +88,20 @@ export interface EmployeeAIEntity {
   speechTimer?: number;    // Thời gian hiển thị bong bóng thoại (giây)
   walkFrame?: number;      // Frame bước đi Chibi
   
-  // Hành vi khủng hoảng
+  // Hành vi khủng hoảng & AI 2.0 (Quan hệ xã hội, Mục tiêu cá nhân, Lịch sinh hoạt)
   isStriking: boolean;    // Đang đình công
   hasGivenNotice: boolean;// Đã nộp đơn nghỉ việc
   daysUntilQuit: number;  // Số ngày đếm ngược trước khi rời đi
   
+  // AI 2.0 Mở rộng
+  personalGoal?: {
+    type: 'PROMOTION_LEAD' | 'SAVING_MONEY' | 'LEARN_NEW_TECH' | 'WORK_LIFE_BALANCE' | 'EARN_ESOP';
+    title: string;
+    progress: number; // 0 - 100
+  };
+  colleagueRelations?: Record<string, number>; // Điểm quan hệ với từng đồng nghiệp (-100 đến +100)
+  dailyActivity?: 'COMMUTING' | 'DAILY_STANDUP' | 'DEEP_WORK' | 'COFFEE_BREAK' | 'LUNCH_BONDING' | 'AFTERNOON_SPRINT' | 'OVERTIME' | 'GOING_HOME' | 'ON_STRIKE';
+
   // Bộ nhớ sự kiện (Event Memory)
   memoryLog: string[];
 }
@@ -255,6 +264,50 @@ export interface EndingData {
   isVictory: boolean;
 }
 
+// ============================================================================
+// 5 GIAI ĐOẠN PHÁT TRIỂN DOANH NGHIỆP & HỆ THỐNG MÔ PHỎNG 2.0
+// ============================================================================
+export type EnterpriseStageId =
+  | 'STAGE_1_BOOTSTRAP'      // Cá nhân khởi nghiệp
+  | 'STAGE_2_STARTUP'        // Startup nhỏ
+  | 'STAGE_3_SCALING'        // Công ty đang phát triển
+  | 'STAGE_4_ENTERPRISE'     // Doanh nghiệp quy mô vừa
+  | 'STAGE_5_CONGLOMERATE';  // Tập đoàn công nghệ
+
+export interface EnterpriseStage {
+  id: EnterpriseStageId;
+  level: number;
+  name: string;
+  title: string;
+  tagline: string;
+  requiredValuation: number;
+  requiredCompletedProjects: number;
+  requiredHeadcount: number;
+  unlockedPerks: string[];
+}
+
+export type SprintStrategy = 'QUALITY_FIRST' | 'BALANCED' | 'CRUNCH_SPEED' | 'REFACTOR_DEBT';
+
+export interface CollectivePetition {
+  id: string;
+  message: string;
+  salaryIncreaseDemandPercent: number;
+  stopOvertimeDemand: boolean;
+  signingEmployees: string[];
+  daysRemaining: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
+export interface FloatingText {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  color: string;
+  alpha: number;
+  life: number;
+}
+
 export interface GameSaveState {
   version: string;
   timestamp: number;
@@ -269,10 +322,13 @@ export interface GameSaveState {
   minute: number;
   weather: WeatherType;
   
-  // Công ty & Tài chính
+  // Công ty & Doanh nghiệp 2.0
   companyName: string;
   isRegistered: boolean;
   taxCode: string;
+  enterpriseStage: EnterpriseStageId;
+  sprintStrategy: SprintStrategy;
+  activePetition: CollectivePetition | null;
   playerStats: PlayerStats;
   currentOfficeId: string;
   furniture: FurnitureItem[];

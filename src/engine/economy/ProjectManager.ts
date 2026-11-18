@@ -2,7 +2,7 @@
 // CEO EMPIRE: PROJECT & CONTRACT MANAGEMENT (Săn thầu, Quản lý Sprint, Bàn giao)
 // ============================================================================
 
-import { ProjectContract, EmployeeAIEntity } from '../../types';
+import { ProjectContract, EmployeeAIEntity, SprintStrategy } from '../../types';
 import { soundManager } from '../core/SoundManager';
 
 export class ProjectManager {
@@ -104,10 +104,11 @@ export class ProjectManager {
     return { depositAmount };
   }
 
-  // Cập nhật tiến độ dự án mỗi ngày
+  // Cập nhật tiến độ dự án mỗi ngày theo Chiến lược Sprint
   public static updateDailyProjectSprint(
     project: ProjectContract,
-    assignedEmployees: EmployeeAIEntity[]
+    assignedEmployees: EmployeeAIEntity[],
+    strategy: SprintStrategy = 'BALANCED'
   ): { isCompleted: boolean; isOverdue: boolean; bugsDelta: number } {
     if (project.status !== 'IN_PROGRESS' && project.status !== 'OVERDUE') {
       return { isCompleted: false, isOverdue: false, bugsDelta: 0 };
@@ -121,6 +122,32 @@ export class ProjectManager {
       isOverdue = true;
     }
 
+    // Hệ số chiến lược Sprint
+    let speedMultiplier = 1.0;
+    let bugMultiplier = 1.0;
+    let baseFixBug = 0;
+
+    switch (strategy) {
+      case 'QUALITY_FIRST':
+        speedMultiplier = 0.85;
+        bugMultiplier = 0.4;
+        baseFixBug = 1;
+        break;
+      case 'CRUNCH_SPEED':
+        speedMultiplier = 1.6;
+        bugMultiplier = 2.0;
+        break;
+      case 'REFACTOR_DEBT':
+        speedMultiplier = 0.35;
+        baseFixBug = 3;
+        break;
+      case 'BALANCED':
+      default:
+        speedMultiplier = 1.0;
+        bugMultiplier = 1.0;
+        break;
+    }
+
     // Tổng tiến độ do các nhân sự đóng góp
     let totalSprintProgress = 0;
     let totalBugsDelta = 0;
@@ -128,11 +155,19 @@ export class ProjectManager {
     assignedEmployees.forEach((emp) => {
       if (!emp.isStriking && emp.currentState === 'WORK') {
         const factor = (emp.speed / 40) * (emp.quality / 100);
-        totalSprintProgress += factor * 5;
+        totalSprintProgress += factor * 5 * speedMultiplier;
 
-        // Tester sẽ giúp fix bug thay vì chỉ tăng tiến độ
+        // Sinh bug tiềm ẩn
+        if (Math.random() < (emp.bugRate / 100) * 0.15 * bugMultiplier) {
+          project.currentBugs += 1;
+          totalBugsDelta += 1;
+        }
+
+        // Tester hoặc Lead sẽ giúp fix bug
         if (emp.role === 'TESTER') {
-          project.currentBugs = Math.max(0, project.currentBugs - Math.floor(emp.quality / 25));
+          project.currentBugs = Math.max(0, project.currentBugs - Math.floor(emp.quality / 25) - baseFixBug);
+        } else if (strategy === 'REFACTOR_DEBT' || strategy === 'QUALITY_FIRST') {
+          project.currentBugs = Math.max(0, project.currentBugs - baseFixBug);
         }
       }
     });

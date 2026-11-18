@@ -9,12 +9,16 @@ import {
   EmployeeAIEntity,
   FurnitureItem,
   DynamicGameEvent,
-  EndingData
+  EndingData,
+  EnterpriseStageId,
+  SprintStrategy,
+  CollectivePetition,
+  FloatingText
 } from '../../types';
 import { TimeManager } from './TimeManager';
 import { PlayerController } from '../world/PlayerController';
 import { WORLD_MAPS, MapSceneConfig, InteractiveZone } from '../world/WorldData';
-import { AVAILABLE_OFFICES, CATALOG_FURNITURE } from '../economy/CompanyManager';
+import { AVAILABLE_OFFICES, CATALOG_FURNITURE, ENTERPRISE_STAGES, CompanyGrowthEngine } from '../economy/CompanyManager';
 import { EconomyManager } from '../economy/EconomyManager';
 import { ProjectManager } from '../economy/ProjectManager';
 import { EmployeeAIEngine } from '../ai/EmployeeAI';
@@ -38,6 +42,11 @@ export class GameStateManager {
   public companyName: string = 'NextGen Solutions';
   public isRegistered: boolean = false;
   public taxCode: string = '0109988776';
+  public enterpriseStage: EnterpriseStageId = 'STAGE_1_BOOTSTRAP';
+  public sprintStrategy: SprintStrategy = 'BALANCED';
+  public activePetition: CollectivePetition | null = null;
+  public floatingTexts: FloatingText[] = [];
+  public hasPlayedStandupSoundToday: boolean = false;
   public currentOfficeId: string = 'office_tier_1';
   public furniture: FurnitureItem[] = [...CATALOG_FURNITURE];
   public employees: EmployeeAIEntity[] = [];
@@ -115,11 +124,34 @@ export class GameStateManager {
     };
   }
 
+  public addFloatingText(text: string, x: number, y: number, color: string = '#22c55e') {
+    this.floatingTexts.push({
+      id: `ft_${Date.now()}_${Math.random()}`,
+      text,
+      x,
+      y,
+      color,
+      alpha: 1.0,
+      life: 1.8
+    });
+  }
+
   // VÒNG LẶP CHÍNH CẬP NHẬT THEO FRAME
   public update(deltaTime: number) {
     if (this.gamePhase === 'PLAYING') {
       // 1. Cập nhật thời gian
       this.timeManager.update(deltaTime);
+
+      // 1b. Cập nhật floating texts bay lên và mờ dần
+      for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+        const ft = this.floatingTexts[i];
+        ft.life -= deltaTime;
+        ft.y -= 25 * deltaTime;
+        ft.alpha = Math.max(0, ft.life / 1.8);
+        if (ft.life <= 0) {
+          this.floatingTexts.splice(i, 1);
+        }
+      }
 
       // 2. Cập nhật di chuyển & va chạm người chơi
       this.playerController.update(deltaTime, this.currentScene, (zone) => {
@@ -131,6 +163,14 @@ export class GameStateManager {
         const isWorkHour = this.timeManager.isWorkHour();
         const isLunch = this.timeManager.isLunchHour();
         const isOT = this.isOvertimeActive && this.timeManager.isOvertimeHour();
+        const isDailyStandup = this.timeManager.hour === 9 && this.timeManager.minute <= 30;
+
+        // Chuông báo họp Standup 09:00 sáng
+        if (isDailyStandup && !this.hasPlayedStandupSoundToday) {
+          this.hasPlayedStandupSoundToday = true;
+          soundManager.playStandupBell();
+          this.addFloatingText('🔔 HỌP DAILY STANDUP 09:00', 380, 70, '#38bdf8');
+        }
 
         const coffeePos = { x: 620, y: 90 };
         const loungePos = { x: 500, y: 370 };
@@ -147,7 +187,8 @@ export class GameStateManager {
             exitPos,
             isWorkHour,
             isLunch,
-            isOT
+            isOT,
+            isDailyStandup
           );
         });
       }
@@ -175,7 +216,7 @@ export class GameStateManager {
         break;
 
       case 'OPEN_PROJECTS':
-        this.isProjectTenderOpen = true;
+        this.openDashboardTab = 'PROJECTS';
         this.notify();
         break;
 
@@ -239,6 +280,7 @@ export class GameStateManager {
 
   // Xử lý chu kỳ mỗi ngày
   private handleDailyCycle(day: number) {
+    this.hasPlayedStandupSoundToday = false;
     const hasCoffee = this.furniture.some((f) => f.id === 'item_coffee_espresso' && f.purchased);
     const hasErgo = this.furniture.some((f) => f.id === 'item_chair_ergo' && f.purchased);
 
@@ -254,10 +296,17 @@ export class GameStateManager {
       );
     });
 
-    // 2. Cập nhật tiến độ các dự án đang chạy
+    // 1b. Cập nhật Mạng lưới xã hội & Mục tiêu cá nhân 2.0
+    EmployeeAIEngine.updateSocialGraphAndPersonalGoals(
+      this.employees,
+      this.activeProjects,
+      this.isOvertimeActive
+    );
+
+    // 2. Cập nhật tiến độ các dự án đang chạy theo Chiến lược Sprint hiện hành
     this.activeProjects.forEach((proj) => {
       const assigned = this.employees.filter((e) => proj.assignedEmployeeIds.includes(e.id));
-      const { isCompleted } = ProjectManager.updateDailyProjectSprint(proj, assigned);
+      const { isCompleted } = ProjectManager.updateDailyProjectSprint(proj, assigned, this.sprintStrategy);
 
       if (isCompleted) {
         const { payout, reputationGain } = ProjectManager.deliverProject(proj);
@@ -265,6 +314,7 @@ export class GameStateManager {
         this.monthlyRevenueAccumulated += payout;
         this.playerStats.reputation = Math.min(100, this.playerStats.reputation + reputationGain);
         this.completedProjectsCount += 1;
+        this.addFloatingText(`+${payout.toLocaleString('vi-VN')}đ`, 380, 220, '#22c55e');
         this.decisionLog.push(`Hoàn thành & Bàn giao dự án: ${proj.name}. Thu về ${payout.toLocaleString('vi-VN')} VNĐ.`);
       }
     });
@@ -272,24 +322,135 @@ export class GameStateManager {
     // Xóa các dự án đã hoàn thành khỏi danh sách active
     this.activeProjects = this.activeProjects.filter((p) => p.status !== 'COMPLETED');
 
-    // 3. Cập nhật quan hệ tình cảm
+    // 3. Đánh giá Định giá & Thăng cấp Giai đoạn Doanh nghiệp (Enterprise Stage)
     const valuation = EconomyManager.calculateCompanyValuation(
       this.cashHistory.slice(-6),
       this.employees.length,
       this.playerStats.reputation,
       this.completedProjectsCount
     );
+
+    const newStage = CompanyGrowthEngine.evaluateStage(
+      valuation,
+      this.completedProjectsCount,
+      this.employees.length
+    );
+    if (newStage !== this.enterpriseStage) {
+      this.enterpriseStage = newStage;
+      const stageInfo = ENTERPRISE_STAGES[newStage];
+      this.decisionLog.push(`🏆 NÂNG CẤP DOANH NGHIỆP: Đạt ${stageInfo.name} (${stageInfo.title})!`);
+      this.addFloatingText(`🏆 LÊN CẤP: ${stageInfo.name}`, 380, 180, '#38bdf8');
+      soundManager.playSuccess();
+    }
+
+    // 4. Quản lý Đơn kiến nghị tập thể (Collective Petition)
+    if (!this.activePetition) {
+      const petition = EmployeeAIEngine.checkForCollectivePetition(this.employees, this.isOvertimeActive);
+      if (petition) {
+        this.activePetition = petition;
+        this.decisionLog.push(`⚠️ Khủng hoảng nhân sự: Tập thể nhân viên đệ trình Đơn kiến nghị!`);
+        soundManager.playAlert();
+      }
+    } else if (this.activePetition.status === 'PENDING') {
+      this.activePetition.daysRemaining -= 1;
+      if (this.activePetition.daysRemaining <= 0) {
+        // Quá hạn không giải quyết -> bùng nổ đình công
+        this.activePetition.status = 'REJECTED';
+        this.employees.forEach((emp) => {
+          if (this.activePetition!.signingEmployees.includes(emp.id)) {
+            emp.isStriking = true;
+            emp.currentState = 'PROTEST';
+            emp.speechBubble = 'BÃI CÔNG vì CEO phớt lờ kiến nghị!';
+          }
+        });
+        this.decisionLog.push(`🚨 ĐÌNH CÔNG TẬP THỂ: Đơn kiến nghị quá hạn không được phản hồi!`);
+        soundManager.playDramaticChord();
+      }
+    }
+
+    // 5. Cập nhật quan hệ tình cảm
     RelationshipManager.updateDailyRelationship(this.romance, this.father, day, this.playerStats.reputation, valuation);
 
-    // 4. Kích hoạt sự kiện ngẫu nhiên động
+    // 6. Kích hoạt sự kiện ngẫu nhiên động
     const event = DynamicEventManager.rollDailyEvent(day, this.decisionLog);
     if (event) {
       this.currentActiveEvent = event;
       soundManager.playAlert();
     }
 
-    // 5. Tự động lưu dữ liệu
+    // 7. Tự động lưu dữ liệu
     SaveLoadManager.autoSave(this.exportState(0));
+    this.notify();
+  }
+
+  // Chấp thuận Đơn kiến nghị tập thể
+  public acceptPetition() {
+    if (!this.activePetition) return;
+    const petition = this.activePetition;
+    this.employees.forEach((emp) => {
+      if (petition.signingEmployees.includes(emp.id)) {
+        emp.currentSalary = Math.round(emp.currentSalary * (1 + petition.salaryIncreaseDemandPercent / 100));
+        emp.happiness = Math.min(100, emp.happiness + 30);
+        emp.ceoTrust = Math.min(100, emp.ceoTrust + 25);
+        emp.resentment = Math.max(0, emp.resentment - 40);
+        emp.isStriking = false;
+        emp.speechBubble = 'Cảm ơn CEO đã lắng nghe tiếng nói anh em!';
+        emp.currentState = 'HAPPY';
+      }
+    });
+    if (petition.stopOvertimeDemand) {
+      this.isOvertimeActive = false;
+    }
+    this.decisionLog.push('Đã chấp thuận Đơn kiến nghị: Nâng lương & cải thiện môi trường làm việc.');
+    this.addFloatingText('❤️ LÒNG DÂN PHẤN CHẤN (+30 Hạnh Phúc)', 380, 200, '#ec4899');
+    this.activePetition = null;
+    soundManager.playSuccess();
+    this.notify();
+  }
+
+  // Thương lượng thỏa hiệp Đơn kiến nghị (Thưởng nóng)
+  public compromisePetition() {
+    if (!this.activePetition) return;
+    const bonusPerPerson = 3000000;
+    const totalBonus = bonusPerPerson * this.activePetition.signingEmployees.length;
+    if (this.playerStats.cash < totalBonus) {
+      alert(`Không đủ tiền mặt để thưởng nóng (Cần tối thiểu ${totalBonus.toLocaleString('vi-VN')} VNĐ)!`);
+      return;
+    }
+    this.playerStats.cash -= totalBonus;
+    this.employees.forEach((emp) => {
+      if (this.activePetition!.signingEmployees.includes(emp.id)) {
+        emp.happiness = Math.min(100, emp.happiness + 15);
+        emp.resentment = Math.max(10, emp.resentment - 25);
+        emp.isStriking = false;
+        emp.speechBubble = 'Nhận thưởng nóng và tiếp tục cố gắng.';
+      }
+    });
+    this.decisionLog.push(`Thương lượng thỏa hiệp đơn kiến nghị: Thưởng nóng ${totalBonus.toLocaleString('vi-VN')} VNĐ.`);
+    this.addFloatingText(`-${totalBonus.toLocaleString('vi-VN')}đ`, 380, 220, '#ef4444');
+    this.activePetition = null;
+    soundManager.playCashEarned();
+    this.notify();
+  }
+
+  // Bác bỏ Đơn kiến nghị tập thể
+  public rejectPetition() {
+    if (!this.activePetition) return;
+    this.employees.forEach((emp) => {
+      if (this.activePetition!.signingEmployees.includes(emp.id)) {
+        emp.resentment = Math.min(100, emp.resentment + 25);
+        emp.ceoTrust = Math.max(0, emp.ceoTrust - 30);
+        if (Math.random() < 0.75) {
+          emp.isStriking = true;
+          emp.currentState = 'PROTEST';
+          emp.speechBubble = 'Phản đối CEO bác bỏ kiến nghị!';
+        }
+      }
+    });
+    this.decisionLog.push('Bác bỏ Đơn kiến nghị tập thể: Nguy cơ bùng phát làn sóng đình công!');
+    this.addFloatingText('⚡ BẤT MÃN TĂNG CAO', 380, 200, '#ef4444');
+    this.activePetition = null;
+    soundManager.playDramaticChord();
     this.notify();
   }
 
@@ -504,6 +665,9 @@ export class GameStateManager {
       companyName: this.companyName,
       isRegistered: this.isRegistered,
       taxCode: this.taxCode,
+      enterpriseStage: this.enterpriseStage,
+      sprintStrategy: this.sprintStrategy,
+      activePetition: this.activePetition ? { ...this.activePetition } : null,
       playerStats: { ...this.playerStats },
       currentOfficeId: this.currentOfficeId,
       furniture: [...this.furniture],
@@ -536,6 +700,9 @@ export class GameStateManager {
     this.companyName = save.companyName;
     this.isRegistered = save.isRegistered;
     this.taxCode = save.taxCode;
+    this.enterpriseStage = save.enterpriseStage || 'STAGE_1_BOOTSTRAP';
+    this.sprintStrategy = save.sprintStrategy || 'BALANCED';
+    this.activePetition = save.activePetition || null;
     this.playerStats = { ...save.playerStats };
     this.currentOfficeId = save.currentOfficeId;
     this.furniture = [...save.furniture];

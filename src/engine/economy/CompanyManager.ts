@@ -1,8 +1,111 @@
 // ============================================================================
-// CEO EMPIRE: COMPANY & OFFICE MANAGEMENT
+// CEO EMPIRE: COMPANY & ENTERPRISE GROWTH SYSTEM (5 Giai Đoạn Phát Triển)
 // ============================================================================
 
-import { OfficeTier, FurnitureItem } from '../../types';
+import { OfficeTier, FurnitureItem, EnterpriseStage, EnterpriseStageId } from '../../types';
+
+export const ENTERPRISE_STAGES: Record<EnterpriseStageId, EnterpriseStage> = {
+  STAGE_1_BOOTSTRAP: {
+    id: 'STAGE_1_BOOTSTRAP',
+    level: 1,
+    name: 'Cá Nhân Khởi Nghiệp',
+    title: 'Sole Founder / Freelance Studio',
+    tagline: 'Vạn sự khởi đầu nan — Tự lực cánh sinh với 500 triệu đầu tiên',
+    requiredValuation: 0,
+    requiredCompletedProjects: 0,
+    requiredHeadcount: 0,
+    unlockedPerks: [
+      'Tự do nhận dự án nhỏ và vừa',
+      'Làm việc tại phòng trọ hoặc thuê văn phòng nhỏ',
+      'Quản lý trực tiếp không phát sinh chi phí trung gian'
+    ]
+  },
+  STAGE_2_STARTUP: {
+    id: 'STAGE_2_STARTUP',
+    level: 2,
+    name: 'Startup Công Nghệ Trẻ',
+    title: 'Early-Stage Tech Startup',
+    tagline: 'Xây dựng đội ngũ nòng cốt và định hình sản phẩm chủ lực',
+    requiredValuation: 1000000000, // 1 Tỷ VNĐ
+    requiredCompletedProjects: 2,
+    requiredHeadcount: 2,
+    unlockedPerks: [
+      'Mở khóa Văn phòng Shophouse (10 chỗ)',
+      'Tuyển dụng Senior Fullstack & UI/UX Designer',
+      'Mở khóa họp Daily Standup 09:00 sáng tại bảng Kanban',
+      'Nhận dự án khách hàng SME trị giá trên 100 triệu'
+    ]
+  },
+  STAGE_3_SCALING: {
+    id: 'STAGE_3_SCALING',
+    level: 3,
+    name: 'Công Ty Đang Phát Triển',
+    title: 'Scaling Technology Company',
+    tagline: 'Phân quyền quản lý, tuyển Tech Lead và chuẩn hóa quy trình Agile',
+    requiredValuation: 3000000000, // 3 Tỷ VNĐ
+    requiredCompletedProjects: 5,
+    requiredHeadcount: 5,
+    unlockedPerks: [
+      'Mở khóa bổ nhiệm Trưởng Nhóm Kỹ Thuật (Tech Lead / PM)',
+      'Tech Lead tự động hỗ trợ fix bug và tối ưu sprint',
+      'Mở khóa Chiến Lược Sprint (Chất lượng, Chạy tiến độ, Refactor)',
+      'Mở gói tín dụng vay vốn ngân hàng hạn mức 500 triệu'
+    ]
+  },
+  STAGE_4_ENTERPRISE: {
+    id: 'STAGE_4_ENTERPRISE',
+    level: 4,
+    name: 'Doanh Nghiệp Quy Mô Vừa',
+    title: 'Mid-Sized Tech Enterprise',
+    tagline: 'Đa phòng ban chuyên trách: R&D, UI/UX, QA, Kế toán & Nhân sự',
+    requiredValuation: 10000000000, // 10 Tỷ VNĐ
+    requiredCompletedProjects: 10,
+    requiredHeadcount: 8,
+    unlockedPerks: [
+      'Mở khóa Tòa Tháp Bitexco Landmark Hạng A (25 chỗ)',
+      'Phòng ban tự chủ: Bộ phận HR tự động lọc CV ứng viên tài năng',
+      'Nhận thầu dự án Enterprise & Ngân hàng quốc gia (>500 triệu)',
+      'Ông Hoàng Thế Vinh chính thức công nhận năng lực lãnh đạo'
+    ]
+  },
+  STAGE_5_CONGLOMERATE: {
+    id: 'STAGE_5_CONGLOMERATE',
+    level: 5,
+    name: 'Tập Đoàn Công Nghệ Kỳ Lân',
+    title: 'Unicorn Tech Conglomerate',
+    tagline: 'Hội đồng quản trị, cổ phần ESOP và chi phối thị trường công nghệ',
+    requiredValuation: 25000000000, // 25 Tỷ VNĐ
+    requiredCompletedProjects: 18,
+    requiredHeadcount: 15,
+    unlockedPerks: [
+      'Mở khóa Hội đồng Quản trị & Kêu gọi vốn Shark Fund 5 - 10 tỷ',
+      'Chương trình cổ phần thưởng ESOP giữ chân 100% nhân sự cốt lõi',
+      'Mở khóa điều kiện chiến thắng vinh quang: Ending 01 — Kỳ Lân Công Nghệ'
+    ]
+  }
+};
+
+export class CompanyGrowthEngine {
+  public static evaluateStage(
+    valuation: number,
+    completedProjects: number,
+    headcount: number
+  ): EnterpriseStageId {
+    if (valuation >= 25000000000 && completedProjects >= 18 && headcount >= 15) {
+      return 'STAGE_5_CONGLOMERATE';
+    }
+    if (valuation >= 10000000000 && completedProjects >= 10 && headcount >= 8) {
+      return 'STAGE_4_ENTERPRISE';
+    }
+    if (valuation >= 3000000000 && completedProjects >= 5 && headcount >= 5) {
+      return 'STAGE_3_SCALING';
+    }
+    if (valuation >= 1000000000 && completedProjects >= 2 && headcount >= 2) {
+      return 'STAGE_2_STARTUP';
+    }
+    return 'STAGE_1_BOOTSTRAP';
+  }
+}
 
 export const AVAILABLE_OFFICES: OfficeTier[] = [
   {

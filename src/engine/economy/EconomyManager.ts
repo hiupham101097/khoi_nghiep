@@ -22,6 +22,29 @@ export class EconomyManager {
     return loans.reduce((sum, loan) => sum + loan.monthlyPayment, 0);
   }
 
+  // Tính tốc độ đốt tiền hàng tháng (Monthly Burn Rate)
+  public static calculateMonthlyBurnRate(
+    employees: EmployeeAIEntity[],
+    office: OfficeTier | null,
+    furniture: FurnitureItem[],
+    loans: LoanAccount[]
+  ): number {
+    const payroll = this.calculateMonthlyPayroll(employees);
+    const officeRent = office ? office.monthlyRent : 0;
+    const maintenance = this.calculateMonthlyMaintenance(furniture);
+    const utilitiesAndServers = office ? Math.floor(office.monthlyRent * 0.15) + 3000000 : 1500000;
+    const loanPayment = this.calculateMonthlyLoanPayments(loans);
+
+    return payroll + officeRent + maintenance + utilitiesAndServers + loanPayment;
+  }
+
+  // Tính số tháng sống sót của công ty (Runway Months)
+  public static calculateRunwayMonths(currentCash: number, monthlyBurnRate: number): number {
+    if (currentCash <= 0) return 0;
+    if (monthlyBurnRate <= 0) return 99;
+    return parseFloat((currentCash / monthlyBurnRate).toFixed(1));
+  }
+
   // Chốt sổ tài chính cuối mỗi tháng (Monthly Financial Settlement)
   public static processMonthlySettlement(
     currentCash: number,

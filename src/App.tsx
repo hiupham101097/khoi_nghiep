@@ -15,11 +15,15 @@ import { BankModal } from './ui/BankModal';
 import { DynamicEventModal } from './ui/DynamicEventModal';
 import { SaveMenuModal } from './ui/SaveMenuModal';
 import { EmployeeReviewModal } from './ui/EmployeeReviewModal';
+import { CollectivePetitionModal } from './ui/CollectivePetitionModal';
+import { ENTERPRISE_STAGES } from './engine/economy/CompanyManager';
 import { soundManager } from './engine/core/SoundManager';
 
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<WorldRenderer | null>(null);
+  const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPetitionModalOpen, setIsPetitionModalOpen] = useState<boolean>(false);
 
   // Khởi tạo GameStateManager duy nhất
   const gsm = useMemo(() => new GameStateManager(), []);
@@ -61,31 +65,35 @@ export const App: React.FC = () => {
       // 1. Cập nhật logic game
       gsm.update(deltaTime);
 
-      // 2. Tính toán vị trí Camera (theo dõi người chơi và kẹp trong biên bản đồ)
+      // 2. Smooth Camera Lerp (Theo dõi nhân vật mượt mà, khử hoàn toàn hiện tượng giật)
       const scene = gsm.currentScene;
-      let camX = gsm.playerController.pos.x - canvas.width / 2;
-      let camY = gsm.playerController.pos.y - canvas.height / 2;
-
       const maxCamX = Math.max(0, scene.width - canvas.width);
       const maxCamY = Math.max(0, scene.height - canvas.height);
 
-      camX = Math.max(0, Math.min(camX, maxCamX));
-      camY = Math.max(0, Math.min(camY, maxCamY));
+      const targetCamX = Math.max(0, Math.min(gsm.playerController.pos.x - canvas.width / 2, maxCamX));
+      const targetCamY = Math.max(0, Math.min(gsm.playerController.pos.y - canvas.height / 2, maxCamY));
+
+      cameraRef.current.x += (targetCamX - cameraRef.current.x) * Math.min(1, deltaTime * 8);
+      cameraRef.current.y += (targetCamY - cameraRef.current.y) * Math.min(1, deltaTime * 8);
 
       // 3. Vẽ toàn bộ khung hình thế giới 2D Chibi
       const entities = gsm.getRenderableEntities();
       const ambientLight = gsm.timeManager.getAmbientLighting();
       const activePrompt = gsm.playerController.nearbyZone ? gsm.playerController.nearbyZone.prompt : null;
+      const stageLevel = ENTERPRISE_STAGES[gsm.enterpriseStage]?.level || 1;
 
       renderer.renderFrame(
         scene,
-        { x: camX, y: camY },
+        { x: cameraRef.current.x, y: cameraRef.current.y },
         entities,
         gsm.timeManager.weather,
         ambientLight,
         gsm.timeManager.getPeriod(),
         activePrompt,
-        globalTick
+        globalTick,
+        gsm.floatingTexts,
+        gsm.sprintStrategy,
+        stageLevel
       );
 
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -125,14 +133,8 @@ export const App: React.FC = () => {
     const clickScreenX = e.clientX - rect.left;
     const clickScreenY = e.clientY - rect.top;
 
-    const scene = gsm.currentScene;
-    const maxCamX = Math.max(0, scene.width - canvas.width);
-    const maxCamY = Math.max(0, scene.height - canvas.height);
-    const camX = Math.max(0, Math.min(gsm.playerController.pos.x - canvas.width / 2, maxCamX));
-    const camY = Math.max(0, Math.min(gsm.playerController.pos.y - canvas.height / 2, maxCamY));
-
-    const worldTargetX = clickScreenX + camX;
-    const worldTargetY = clickScreenY + camY;
+    const worldTargetX = clickScreenX + cameraRef.current.x;
+    const worldTargetY = clickScreenY + cameraRef.current.y;
 
     // Kiểm tra tương tác click trực tiếp vào nhân viên trong văn phòng
     if (gsm.currentSceneId === 'OFFICE') {
@@ -163,7 +165,7 @@ export const App: React.FC = () => {
       />
 
       {/* Heads-Up Display (HUD) */}
-      <HUD gsm={gsm} />
+      <HUD gsm={gsm} onOpenPetition={() => setIsPetitionModalOpen(true)} />
 
       {/* 1. Kịch bản Mở đầu 500 triệu */}
       {gsm.gamePhase === 'INTRO_CINEMATIC' && <IntroCinematicModal gsm={gsm} />}
@@ -242,6 +244,15 @@ export const App: React.FC = () => {
             gsm.selectedEmployeeFor1on1 = null;
             gsm.notify();
           }}
+        />
+      )}
+
+      {/* 10. Đàm Phán Đơn Kiến Nghị Tập Thể (Khủng Hoảng Lao Động) */}
+      {(isPetitionModalOpen || (gsm.activePetition !== null && gsm.activePetition.daysRemaining === 3)) && gsm.activePetition !== null && (
+        <CollectivePetitionModal
+          gsm={gsm}
+          petition={gsm.activePetition}
+          onClose={() => setIsPetitionModalOpen(false)}
         />
       )}
     </div>

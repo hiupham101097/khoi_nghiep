@@ -7,6 +7,7 @@ import { GameStateManager } from '../engine/core/GameStateManager';
 import {
   Users,
   TrendingUp,
+  TrendingDown,
   FolderGit2,
   Building2,
   Scale,
@@ -20,11 +21,12 @@ import {
   Clock,
   Sparkles
 } from 'lucide-react';
-import { AVAILABLE_OFFICES } from '../engine/economy/CompanyManager';
+import { AVAILABLE_OFFICES, ENTERPRISE_STAGES } from '../engine/economy/CompanyManager';
 import { EconomyManager } from '../engine/economy/EconomyManager';
 import { EmployeeAIEngine } from '../engine/ai/EmployeeAI';
 import { soundManager } from '../engine/core/SoundManager';
 import { RelationshipManager } from '../engine/narrative/RelationshipManager';
+import { SprintStrategy } from '../types';
 
 interface CEODashboardProps {
   gsm: GameStateManager;
@@ -45,6 +47,16 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
 
   const monthlyPayroll = EconomyManager.calculateMonthlyPayroll(gsm.employees);
   const currentOffice = AVAILABLE_OFFICES.find((o) => o.id === gsm.currentOfficeId) || AVAILABLE_OFFICES[0];
+  const monthlyBurnRate = EconomyManager.calculateMonthlyBurnRate(
+    gsm.employees,
+    currentOffice,
+    gsm.furniture,
+    gsm.loans
+  );
+  const runwayMonths = EconomyManager.calculateRunwayMonths(gsm.playerStats.cash, monthlyBurnRate);
+  const stageData = ENTERPRISE_STAGES[gsm.enterpriseStage];
+  const allStages = Object.values(ENTERPRISE_STAGES);
+  const nextStage = allStages.find((s) => s.level === stageData.level + 1) || null;
 
   return (
     <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn">
@@ -176,6 +188,88 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                   </p>
                   <span className="text-[11px] text-sky-300">Uy tín: {gsm.playerStats.reputation}/100</span>
                 </div>
+              </div>
+
+              {/* LỘ TRÌNH 5 GIAI ĐOẠN PHÁT TRIỂN DOANH NGHIỆP */}
+              <div className="bg-slate-800/80 border border-indigo-500/40 p-5 rounded-2xl shadow-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-600/30 border border-indigo-400 flex items-center justify-center text-indigo-300 font-black text-lg">
+                      {stageData.level}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Giai Đoạn Hiện Tại:</span>
+                        <h3 className="text-base font-extrabold text-slate-100">{stageData.name} ({stageData.title})</h3>
+                      </div>
+                      <p className="text-xs text-slate-300 italic">{stageData.tagline}</p>
+                    </div>
+                  </div>
+
+                  {nextStage ? (
+                    <span className="text-xs bg-indigo-950 border border-indigo-500/50 text-indigo-300 px-3 py-1 rounded-full font-semibold">
+                      Mục tiêu kế tiếp: Cấp {nextStage.level} - {nextStage.name}
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-emerald-950 border border-emerald-500 text-emerald-300 px-3 py-1 rounded-full font-bold">
+                      🏆 ĐÃ ĐẠT CẤP ĐỘ CAO NHẤT (KỲ LÂN CÔNG NGHỆ)
+                    </span>
+                  )}
+                </div>
+
+                {/* Các đặc quyền đã mở khóa */}
+                <div className="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl">
+                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Đặc Quyền Đã Kích Hoạt Trong Giai Đoạn Này:</h4>
+                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-300">
+                    {stageData.unlockedPerks.map((perk, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>{perk}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Thanh tiến độ lên cấp tiếp theo nếu có */}
+                {nextStage && (
+                  <div className="bg-slate-950/50 border border-slate-800/80 p-3.5 rounded-xl space-y-3">
+                    <h4 className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+                      Điều Kiện Thăng Cấp Lên Cấp {nextStage.level}: {nextStage.name}
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                      <div>
+                        <div className="flex justify-between text-slate-400 mb-1">
+                          <span>Định giá:</span>
+                          <span className="font-mono">{Math.round((valuation / nextStage.requiredValuation) * 100)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div className="bg-amber-400 h-full" style={{ width: `${Math.min(100, (valuation / nextStage.requiredValuation) * 100)}%` }} />
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono">{valuation.toLocaleString('vi-VN')} / {nextStage.requiredValuation.toLocaleString('vi-VN')} đ</span>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-slate-400 mb-1">
+                          <span>Dự án xong:</span>
+                          <span className="font-mono">{gsm.completedProjectsCount} / {nextStage.requiredCompletedProjects}</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div className="bg-sky-400 h-full" style={{ width: `${Math.min(100, (gsm.completedProjectsCount / nextStage.requiredCompletedProjects) * 100)}%` }} />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-slate-400 mb-1">
+                          <span>Quy mô nhân sự:</span>
+                          <span className="font-mono">{gsm.employees.length} / {nextStage.requiredHeadcount} người</span>
+                        </div>
+                        <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                          <div className="bg-indigo-400 h-full" style={{ width: `${Math.min(100, (gsm.employees.length / nextStage.requiredHeadcount) * 100)}%` }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Tình trạng văn phòng & Lời khuyên chiến lược */}
@@ -446,6 +540,93 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                 </button>
               </div>
 
+              {/* CHIẾN LƯỢC SPRINT (Agile Sprint Strategies) */}
+              <div className="bg-slate-800/80 border border-slate-700/80 p-4 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Chiến Lược Điều Hành Sprint Của CEO</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-400">Tác động trực tiếp đến vận tốc bàn giao, tỷ lệ phát sinh lỗi và công tác refactor</p>
+                  </div>
+                  <span className="text-xs bg-slate-900 border border-slate-700 px-2.5 py-1 rounded text-sky-300 font-bold font-mono">
+                    Đang chọn: {gsm.sprintStrategy}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  {[
+                    {
+                      id: 'QUALITY_FIRST' as SprintStrategy,
+                      name: 'Chất Lượng Tối Đa',
+                      speed: '85% tốc độ',
+                      bug: '-60% lỗi',
+                      fix: 'Tự động sửa lỗi hàng ngày',
+                      border: 'border-emerald-500/50',
+                      bg: 'bg-emerald-950/40',
+                      color: 'text-emerald-300'
+                    },
+                    {
+                      id: 'BALANCED' as SprintStrategy,
+                      name: 'Cân Bằng Tiêu Chuẩn',
+                      speed: '100% tốc độ',
+                      bug: 'Bình thường',
+                      fix: 'Cân đối tiến độ & chất lượng',
+                      border: 'border-sky-500/50',
+                      bg: 'bg-sky-950/40',
+                      color: 'text-sky-300'
+                    },
+                    {
+                      id: 'CRUNCH_SPEED' as SprintStrategy,
+                      name: 'Tăng Tốc Crunch',
+                      speed: '+60% tốc độ',
+                      bug: '+100% lỗi',
+                      fix: 'Chạy nước rút cứu deadline',
+                      border: 'border-rose-500/50',
+                      bg: 'bg-rose-950/40',
+                      color: 'text-rose-300'
+                    },
+                    {
+                      id: 'REFACTOR_DEBT' as SprintStrategy,
+                      name: 'Dọn Nợ Kỹ Thuật',
+                      speed: '35% tốc độ',
+                      bug: 'Không sinh lỗi',
+                      fix: 'Fix triệt để -3 bug/ngày',
+                      border: 'border-amber-500/50',
+                      bg: 'bg-amber-950/40',
+                      color: 'text-amber-300'
+                    }
+                  ].map((strat) => {
+                    const isSelected = gsm.sprintStrategy === strat.id;
+                    return (
+                      <button
+                        key={strat.id}
+                        onClick={() => {
+                          gsm.sprintStrategy = strat.id;
+                          soundManager.playClick();
+                          gsm.notify();
+                        }}
+                        className={`p-3 rounded-xl border text-left transition cursor-pointer flex flex-col justify-between ${
+                          isSelected
+                            ? `${strat.bg} ${strat.border} ring-2 ring-sky-400 shadow-md`
+                            : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-bold ${strat.color}`}>{strat.name}</span>
+                            {isSelected && <span className="w-2 h-2 rounded-full bg-sky-400"></span>}
+                          </div>
+                          <div className="text-[11px] text-slate-300 font-mono">{strat.speed} | {strat.bug}</div>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">{strat.fix}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {gsm.activeProjects.length === 0 ? (
                 <div className="text-center py-16 bg-slate-800/40 border border-slate-700 rounded-xl space-y-3">
                   <FolderGit2 className="w-12 h-12 text-slate-500 mx-auto" />
@@ -559,6 +740,44 @@ export const CEODashboard: React.FC<CEODashboardProps> = ({ gsm, onClose }) => {
                   <p className="text-xl font-black text-amber-400 font-mono mt-1">
                     {gsm.loans.reduce((sum, l) => sum + l.principal, 0).toLocaleString('vi-VN')} đ
                   </p>
+                </div>
+              </div>
+
+              {/* PHÂN TÍCH BURN RATE VÀ RUNWAY TỒN TẠI */}
+              <div className="bg-slate-800/80 border border-slate-700/80 p-5 rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <TrendingDown className="w-4 h-4 text-rose-400" />
+                    <span>Chỉ Số Sống Còn: Burn Rate & Runway</span>
+                  </h4>
+                  <span className={`text-xs font-mono font-bold px-3 py-1 rounded-full border ${
+                    runwayMonths > 6
+                      ? 'bg-emerald-950 border-emerald-500 text-emerald-300'
+                      : runwayMonths >= 3
+                      ? 'bg-amber-950 border-amber-500 text-amber-300'
+                      : 'bg-rose-950 border-rose-500 text-rose-300 animate-pulse'
+                  }`}>
+                    {runwayMonths > 6 ? 'Dòng tiền An Toàn' : runwayMonths >= 3 ? 'Cần Thận Trọng' : 'Báo Động Phá Sản'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
+                  <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                    <span className="text-slate-400">Quỹ Lương Nhân Sự:</span>
+                    <p className="font-mono font-bold text-rose-400 text-sm mt-1">{monthlyPayroll.toLocaleString('vi-VN')} đ</p>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                    <span className="text-slate-400">Tiền Thuê Mặt Bằng:</span>
+                    <p className="font-mono font-bold text-slate-200 text-sm mt-1">{currentOffice.monthlyRent.toLocaleString('vi-VN')} đ</p>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                    <span className="text-slate-400">Tổng Burn Rate / Tháng:</span>
+                    <p className="font-mono font-black text-rose-400 text-sm mt-1">-{monthlyBurnRate.toLocaleString('vi-VN')} đ</p>
+                  </div>
+                  <div className="bg-slate-900/80 p-3 rounded-lg border border-slate-800">
+                    <span className="text-slate-400">Số Tháng Tồn Tại (Runway):</span>
+                    <p className="font-mono font-black text-amber-400 text-sm mt-1">{runwayMonths > 99 ? 'Không giới hạn' : `${runwayMonths} tháng`}</p>
+                  </div>
                 </div>
               </div>
 

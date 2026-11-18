@@ -107,6 +107,9 @@ export class SaveLoadManager {
       companyName: raw.companyName || 'NextGen Tech Solutions',
       isRegistered: raw.isRegistered ?? true,
       taxCode: raw.taxCode || '0109988776',
+      enterpriseStage: raw.enterpriseStage || 'STAGE_1_BOOTSTRAP',
+      sprintStrategy: raw.sprintStrategy || 'BALANCED',
+      activePetition: raw.activePetition || null,
       playerStats: raw.playerStats || {
         name: 'Nguyễn Thành Nam',
         age: 22,
