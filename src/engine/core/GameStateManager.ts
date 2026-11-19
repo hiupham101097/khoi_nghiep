@@ -35,7 +35,7 @@ export class GameStateManager {
   public timeManager: TimeManager;
   public playerController: PlayerController;
 
-  public currentSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT' = 'VILLA'; // Bắt đầu tại Biệt thự cuộc gặp 500 triệu
+  public currentSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT' = 'VILLA'; // Bắt đầu tại Biệt thự cuộc gặp 500 triệu
   public currentScene: MapSceneConfig = WORLD_MAPS.VILLA;
 
   // Trạng thái công ty & nhân sự
@@ -293,7 +293,7 @@ export class GameStateManager {
   }
 
   // Chuyển đổi cảnh (Vào/Ra các tòa nhà)
-  public switchScene(targetSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT', targetSpawn?: { x: number; y: number }) {
+  public switchScene(targetSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT', targetSpawn?: { x: number; y: number }) {
     this.currentSceneId = targetSceneId;
     this.currentScene = WORLD_MAPS[targetSceneId] || WORLD_MAPS.CITY;
 

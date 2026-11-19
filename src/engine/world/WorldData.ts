@@ -31,13 +31,13 @@ export interface InteractiveZone {
     | 'OPEN_RECRUIT' 
     | 'OPEN_PROJECTS'
     | 'OPEN_COURT';
-  targetScene?: 'CITY' | 'ROOM' | 'OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
+  targetScene?: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
   targetSpawn?: Position2D;
   data?: Record<string, unknown>;
 }
 
 export interface MapSceneConfig {
-  id: 'CITY' | 'ROOM' | 'OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
+  id: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
   name: string;
   width: number;
   height: number;
@@ -305,6 +305,18 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
         height: 70,
         prompt: 'Nhấn [E] in ấn hồ sơ thầu & hợp đồng công nghệ',
         actionType: 'OPEN_PROJECTS'
+      },
+      {
+        id: 'office_door_to_ceo',
+        name: 'Cửa Vào Phòng Chủ Tịch (CEO Executive Suite)',
+        x: 220,
+        y: 40,
+        width: 70,
+        height: 35,
+        prompt: 'Nhấn [E] vào Phòng Chủ Tịch (CEO Executive Suite)',
+        actionType: 'ENTER_SCENE',
+        targetScene: 'CEO_OFFICE',
+        targetSpawn: { x: 380, y: 460 }
       }
     ],
     deskPositions: [
@@ -317,6 +329,74 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
       { x: 470, y: 370 },
       { x: 590, y: 370 }
     ]
+  },
+
+  CEO_OFFICE: {
+    id: 'CEO_OFFICE',
+    name: 'Phòng Chủ Tịch & Điều Hành Cấp Cao (CEO Suite)',
+    width: 800,
+    height: 550,
+    defaultSpawn: { x: 380, y: 460 },
+    colliders: [
+      { x: 0, y: 0, width: 800, height: 40 },
+      { x: 0, y: 510, width: 800, height: 40 },
+      { x: 0, y: 0, width: 40, height: 550 },
+      { x: 760, y: 0, width: 40, height: 550 },
+
+      // Bàn CEO Chủ Tịch gỗ óc chó nẹp chỉ vàng
+      { x: 260, y: 165, width: 280, height: 100 },
+      // Kệ sách lớn âm tường có đèn LED
+      { x: 40, y: 55, width: 180, height: 160 },
+      // Khu vực sofa tiếp khách cấp cao
+      { x: 270, y: 350, width: 330, height: 130 },
+      // Quầy Espresso Bar & Tủ rượu
+      { x: 630, y: 200, width: 125, height: 100 }
+    ],
+    interactiveZones: [
+      {
+        id: 'ceo_door_back_office',
+        name: 'Cửa Ra Khu Làm Việc Chung',
+        x: 330,
+        y: 490,
+        width: 100,
+        height: 30,
+        prompt: 'Nhấn [E] ra Văn Phòng Làm Việc Chung',
+        actionType: 'ENTER_SCENE',
+        targetScene: 'OFFICE',
+        targetSpawn: { x: 250, y: 120 }
+      },
+      {
+        id: 'ceo_desk_suite',
+        name: 'Bàn Điều Hành Chủ Tịch',
+        x: 270,
+        y: 160,
+        width: 260,
+        height: 95,
+        prompt: 'Nhấn [E] mở Bảng Điều Hành Doanh Nghiệp (CEO Suite)',
+        actionType: 'OPEN_COMPANY_MENU'
+      },
+      {
+        id: 'ceo_guest_lounge',
+        name: 'Khu Tiếp Khách & Phỏng Vấn Cấp Cao',
+        x: 280,
+        y: 350,
+        width: 290,
+        height: 115,
+        prompt: 'Nhấn [E] mở Sàn Tuyển Dụng & Phỏng Vấn Nhân Sự',
+        actionType: 'OPEN_RECRUIT'
+      },
+      {
+        id: 'ceo_espresso_bar',
+        name: 'Quầy Espresso Thượng Hạng',
+        x: 640,
+        y: 200,
+        width: 100,
+        height: 90,
+        prompt: 'Nhấn [E] thưởng thức cà phê Espresso thượng hạng (+30 Năng Lượng)',
+        actionType: 'USE_COFFEE'
+      }
+    ],
+    deskPositions: [{ x: 380, y: 140 }]
   },
 
   VILLA: {

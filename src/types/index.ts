@@ -454,7 +454,7 @@ export interface GameSaveState {
   legal: LegalStatus;
   
   // Vị trí người chơi
-  currentScene: 'CITY' | 'ROOM' | 'OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
+  currentScene: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
   playerPos: Position2D;
   playerDir: CharacterDirection;
   
