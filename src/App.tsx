@@ -150,7 +150,8 @@ export const App: React.FC = () => {
         targetZoom,
         dpr,
         cssW,
-        cssH
+        cssH,
+        gsm.playerController.targetDestination
       );
 
       animationFrameId = requestAnimationFrame(gameLoop);
@@ -194,7 +195,7 @@ export const App: React.FC = () => {
     const worldTargetX = (clickScreenX / zoom) + cameraRef.current.x;
     const worldTargetY = (clickScreenY / zoom) + cameraRef.current.y;
 
-    // Kiểm tra tương tác click trực tiếp vào nhân viên trong văn phòng
+    // 1. Kiểm tra tương tác click trực tiếp vào nhân viên trong văn phòng
     if (gsm.currentSceneId === 'OFFICE') {
       const clickedEmp = gsm.employees.find((emp) => {
         const posX = emp.currentPos ? emp.currentPos.x : 0;
@@ -210,7 +211,33 @@ export const App: React.FC = () => {
       }
     }
 
-    // Thiết lập đích đến liên tục (Smooth Continuous Walk)
+    // 2. Kiểm tra click trực tiếp vào Vùng tương tác (InteractiveZone)
+    const clickedZone = gsm.currentScene.interactiveZones.find((z) => {
+      return (
+        worldTargetX >= z.x - 8 &&
+        worldTargetX <= z.x + z.width + 8 &&
+        worldTargetY >= z.y - 8 &&
+        worldTargetY <= z.y + z.height + 8
+      );
+    });
+
+    if (clickedZone) {
+      const centerX = clickedZone.x + clickedZone.width / 2;
+      const centerY = clickedZone.y + clickedZone.height / 2;
+      const distToPlayer = Math.hypot(gsm.playerController.pos.x - centerX, gsm.playerController.pos.y - centerY);
+
+      if (distToPlayer < 65) {
+        gsm.playerController.clearTargetDestination();
+        gsm.handleZoneInteraction(clickedZone);
+        soundManager.playClick();
+        return;
+      } else {
+        gsm.playerController.setTargetDestination(centerX, centerY);
+        return;
+      }
+    }
+
+    // 3. Thiết lập đích đến liên tục (Smooth Continuous Walk)
     gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
   };
 
@@ -239,6 +266,31 @@ export const App: React.FC = () => {
           gsm.selectedEmployeeFor1on1 = clickedEmp;
           soundManager.playClick();
           gsm.notify();
+          return;
+        }
+      }
+
+      const clickedZone = gsm.currentScene.interactiveZones.find((z) => {
+        return (
+          worldTargetX >= z.x - 12 &&
+          worldTargetX <= z.x + z.width + 12 &&
+          worldTargetY >= z.y - 12 &&
+          worldTargetY <= z.y + z.height + 12
+        );
+      });
+
+      if (clickedZone) {
+        const centerX = clickedZone.x + clickedZone.width / 2;
+        const centerY = clickedZone.y + clickedZone.height / 2;
+        const distToPlayer = Math.hypot(gsm.playerController.pos.x - centerX, gsm.playerController.pos.y - centerY);
+
+        if (distToPlayer < 75) {
+          gsm.playerController.clearTargetDestination();
+          gsm.handleZoneInteraction(clickedZone);
+          soundManager.playClick();
+          return;
+        } else {
+          gsm.playerController.setTargetDestination(centerX, centerY);
           return;
         }
       }

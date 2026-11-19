@@ -72,7 +72,8 @@ export class WorldRenderer {
     zoom: number = 1.0,
     dpr: number = 1.0,
     cssWidth: number = 800,
-    cssHeight: number = 600
+    cssHeight: number = 600,
+    targetDestination?: Position2D | null
   ) {
     const ctx = this.ctx;
 
@@ -91,6 +92,11 @@ export class WorldRenderer {
 
     // LỚP 0 & 1: Vẽ sàn / đường phố / nền bối cảnh
     this.renderGroundAndDecor(scene, tick, sprintStrategy);
+
+    // LỚP 1b: Điểm đích đến Click-to-Move / Tap-to-Move (Vòng sóng lan tỏa chuẩn RPG)
+    if (targetDestination) {
+      this.renderDestinationMarker(targetDestination, tick);
+    }
 
     // LỚP 2: Vẽ đồ nội thất & công trình cố định
     this.renderBuildingsAndObstacles(scene, timePeriod, tick, stageLevel);
@@ -1471,6 +1477,49 @@ export class WorldRenderer {
         drop.x = Math.random() * width;
       }
     });
+
+    ctx.restore();
+  }
+
+  // Điểm đích đến Click-to-Move / Tap-to-Move với hiệu ứng vòng sóng tỏa ra chuẩn RPG
+  private renderDestinationMarker(pos: Position2D, tick: number) {
+    const ctx = this.ctx;
+    ctx.save();
+
+    // Vòng tròn sóng lan tỏa theo tỷ lệ elip phối cảnh sàn 2D
+    const pulse1 = (tick * 4) % 1;
+    const r1 = 8 + pulse1 * 18;
+    const a1 = Math.max(0, 1 - pulse1) * 0.75;
+
+    ctx.strokeStyle = `rgba(56, 189, 248, ${a1})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y, r1, r1 * 0.55, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Vòng cố định nhỏ hơn bên trong
+    const pulse2 = Math.sin(tick * 8) * 1.5;
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y, 10 + pulse2, (10 + pulse2) * 0.55, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Chấm tâm sáng
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.ellipse(pos.x, pos.y, 3, 1.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 4 vạch ngắm chữ thập tinh tế
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(pos.x - 16, pos.y); ctx.lineTo(pos.x - 10, pos.y);
+    ctx.moveTo(pos.x + 10, pos.y); ctx.lineTo(pos.x + 16, pos.y);
+    ctx.moveTo(pos.x, pos.y - 10); ctx.lineTo(pos.x, pos.y - 6);
+    ctx.moveTo(pos.x, pos.y + 6); ctx.lineTo(pos.x, pos.y + 10);
+    ctx.stroke();
 
     ctx.restore();
   }

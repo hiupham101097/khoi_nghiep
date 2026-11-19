@@ -331,34 +331,104 @@ export const HUD: React.FC<HUDProps> = ({
 
       </div>
 
-      {/* Floating Quest Tracker — Collapsible để không che khuất màn hình */}
-      <div className="self-start bg-slate-900/95 backdrop-blur-md border border-amber-500/60 rounded-xl p-2.5 shadow-xl max-w-sm pointer-events-auto text-xs space-y-1 animate-fadeIn">
-        <div
-          onClick={() => setIsQuestOpen(!isQuestOpen)}
-          className="flex items-center justify-between text-amber-400 font-extrabold uppercase tracking-wider text-[10px] cursor-pointer hover:text-amber-300 gap-4"
-        >
-          <div className="flex items-center gap-1.5">
-            <span>🎯 {currentQuest.chapterTitle}</span>
+      {/* Cụm Mini-Map Radar & Quest Tracker (Lấy cảm hứng từ Ảnh tham khảo 4: Radar góc trái màn hình) */}
+      <div className="flex flex-col sm:flex-row items-start gap-2 self-start pointer-events-auto">
+        {/* Radar Mini-Map Widget chuẩn RPG */}
+        <div className="bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-2xl p-2 shadow-2xl flex flex-col items-center gap-1.5 animate-fadeIn">
+          <div className="relative w-20 h-20 rounded-full bg-slate-950 border-2 border-slate-700/80 shadow-inner overflow-hidden flex items-center justify-center">
+            {/* Lưới radar & vòng tròn đồng tâm */}
+            <div className="absolute inset-1 rounded-full border border-sky-500/20" />
+            <div className="absolute inset-3 rounded-full border border-sky-500/15" />
+            <div className="absolute inset-5 rounded-full border border-sky-500/10" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-full h-[0.5px] bg-sky-500/20" />
+              <div className="h-full w-[0.5px] bg-sky-500/20 absolute" />
+            </div>
+
+            {/* Quét radar quay đều */}
+            <div
+              className="absolute inset-0 bg-gradient-to-tr from-sky-500/20 to-transparent rounded-full animate-spin origin-center"
+              style={{ animationDuration: '3.5s' }}
+            />
+
+            {/* Các điểm NPC / Nhân viên trên Radar */}
+            {gsm.currentSceneId === 'OFFICE' &&
+              gsm.employees.map((emp) => {
+                const normX = ((emp.currentPos?.x || 200) / gsm.currentScene.width) * 64 + 8;
+                const normY = ((emp.currentPos?.y || 200) / gsm.currentScene.height) * 64 + 8;
+                const dotColor = emp.isStriking ? '#ef4444' : (emp.frustration || 0) > 60 ? '#f59e0b' : '#10b981';
+                return (
+                  <div
+                    key={emp.id}
+                    className="absolute w-1.5 h-1.5 rounded-full shadow-sm"
+                    style={{
+                      left: `${normX}px`,
+                      top: `${normY}px`,
+                      backgroundColor: dotColor,
+                      boxShadow: `0 0 4px ${dotColor}`
+                    }}
+                    title={`${emp.name} (${emp.behaviorState})`}
+                  />
+                );
+              })}
+
+            {/* Điểm Cửa ra vào trên Radar */}
+            <div
+              className="absolute w-2 h-2 rounded-sm bg-amber-400 border border-amber-300 shadow-sm animate-pulse"
+              style={{
+                left: `${(380 / gsm.currentScene.width) * 64 + 8}px`,
+                top: `${(480 / gsm.currentScene.height) * 64 + 8}px`
+              }}
+              title="Cửa ra vào"
+            />
+
+            {/* Điểm Người chơi (CEO) trên Radar */}
+            <div
+              className="absolute w-2.5 h-2.5 rounded-full bg-sky-400 border border-white shadow-md shadow-sky-400/80 z-10"
+              style={{
+                left: `${(gsm.playerController.pos.x / gsm.currentScene.width) * 64 + 7}px`,
+                top: `${(gsm.playerController.pos.y / gsm.currentScene.height) * 64 + 7}px`
+              }}
+              title="Vị trí của bạn"
+            />
           </div>
-          <div className="flex items-center gap-1">
-            <span className="bg-amber-950 px-1.5 py-0.5 rounded border border-amber-600/40 text-[9px]">Chỉ Dẫn</span>
-            {isQuestOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-          </div>
+
+          {/* Nhãn vị trí dưới Radar */}
+          <span className="text-[10px] font-bold text-slate-300 tracking-wide flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="truncate max-w-[80px]">{gsm.currentScene.name.split(' ')[0]}</span>
+          </span>
         </div>
 
-        {isQuestOpen && (
-          <div className="space-y-1 pt-1 border-t border-slate-800">
-            <h4 className="font-bold text-slate-100 text-xs">
-              {currentQuest.title}
-            </h4>
-            <p className="text-slate-300 text-[11px] leading-relaxed">
-              {currentQuest.targetHint}
-            </p>
-            <div className="text-[10px] text-emerald-400 font-medium pt-1 border-t border-slate-800/80">
-              🎁 {currentQuest.rewardText}
+        {/* Floating Quest Tracker — Collapsible để không che khuất màn hình */}
+        <div className="bg-slate-900/95 backdrop-blur-md border border-amber-500/60 rounded-xl p-2.5 shadow-xl max-w-sm text-xs space-y-1 animate-fadeIn">
+          <div
+            onClick={() => setIsQuestOpen(!isQuestOpen)}
+            className="flex items-center justify-between text-amber-400 font-extrabold uppercase tracking-wider text-[10px] cursor-pointer hover:text-amber-300 gap-4"
+          >
+            <div className="flex items-center gap-1.5">
+              <span>🎯 {currentQuest.chapterTitle}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="bg-amber-950 px-1.5 py-0.5 rounded border border-amber-600/40 text-[9px]">Chỉ Dẫn</span>
+              {isQuestOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </div>
           </div>
-        )}
+
+          {isQuestOpen && (
+            <div className="space-y-1 pt-1 border-t border-slate-800">
+              <h4 className="font-bold text-slate-100 text-xs">
+                {currentQuest.title}
+              </h4>
+              <p className="text-slate-300 text-[11px] leading-relaxed">
+                {currentQuest.targetHint}
+              </p>
+              <div className="text-[10px] text-emerald-400 font-medium pt-1 border-t border-slate-800/80">
+                🎁 {currentQuest.rewardText}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Thông tin vị trí & Hướng dẫn điều khiển thu gọn */}
