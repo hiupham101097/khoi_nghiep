@@ -12,6 +12,18 @@ import {
 } from '../../types';
 import { MapSceneConfig } from './WorldData';
 
+export type JobRoleType = 
+  | 'CEO' 
+  | 'IT' 
+  | 'DESIGNER' 
+  | 'SALES' 
+  | 'LEAD' 
+  | 'ADMIN' 
+  | 'SECURITY' 
+  | 'LAN_ANH' 
+  | 'FATHER' 
+  | 'CITIZEN';
+
 export interface RenderableEntity {
   id: string;
   name: string;
@@ -20,6 +32,7 @@ export interface RenderableEntity {
   direction: CharacterDirection;
   animationState: CharacterAnimationState;
   roleType: 'PLAYER' | 'EMPLOYEE' | 'LAN_ANH' | 'FATHER' | 'CITIZEN';
+  jobRole?: JobRoleType;
   gender?: 'MALE' | 'FEMALE';
   hairColor?: string;
   outfitColor?: string;
@@ -33,6 +46,7 @@ export class WorldRenderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private rainDrops: { x: number; y: number; speed: number; length: number }[] = [];
+  private spriteImages: Map<string, HTMLImageElement> = new Map();
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -42,6 +56,25 @@ export class WorldRenderer {
     }
     this.ctx = context;
     this.initWeatherParticles();
+    this.loadSprites();
+  }
+
+  // Tải các sprite Chibi 2D từ thư mục public/sprites/
+  private loadSprites() {
+    if (typeof window === 'undefined') return;
+    const roles = ['ceo', 'office', 'developer', 'designer', 'hr', 'assistant'];
+    const views = ['front', 'side', 'back'];
+
+    roles.forEach((role) => {
+      views.forEach((view) => {
+        const key = `${role}_${view}`;
+        const img = new Image();
+        img.src = `/sprites/${key}.png`;
+        img.onload = () => {
+          this.spriteImages.set(key, img);
+        };
+      });
+    });
   }
 
   private initWeatherParticles() {
@@ -2553,10 +2586,18 @@ export class WorldRenderer {
     }
   }
 
-  // VẼ NHÂN VẬT 2D CHIBI THEO TỶ LỆ 1:2.2 (Trưởng thành, biểu cảm anime, chuyển động chân tay mượt)
+  // VẼ NHÂN VẬT 2D CHIBI THEO TỶ LỆ 1:2.2 (Chuẩn 8 bản thiết kế Design Sheets)
   public renderChibiCharacter(entity: RenderableEntity, tick: number) {
     const ctx = this.ctx;
-    const { x, y, direction, animationState, roleType, gender } = entity;
+    const { x, y, direction, animationState, roleType, gender, jobRole } = entity;
+
+    // Xác định vai trò công việc chi tiết chuẩn theo 8 Design Sheets
+    const effectiveJob: JobRoleType = jobRole || (
+      roleType === 'PLAYER' ? 'CEO' :
+      roleType === 'LAN_ANH' ? 'LAN_ANH' :
+      roleType === 'FATHER' ? 'FATHER' :
+      gender === 'FEMALE' ? 'DESIGNER' : 'IT'
+    );
 
     ctx.save();
     ctx.translate(x, y);
@@ -2568,26 +2609,155 @@ export class WorldRenderer {
     const isCelebrating = animationState === 'CELEBRATE';
     const isIdle = animationState === 'IDLE';
 
-    // Smoother walk cycle with sin(tick*10) instead of tick*12
+    // Chuyển động bước chân & hô hấp
     const walkOffset = isMoving ? Math.sin(tick * 10) * 4 : 0;
     const legSwing = isMoving ? Math.sin(tick * 10) * 8 : 0;
     const workTyping = isWorking ? Math.sin(tick * 20) * 2 : 0;
     const jumpCelebrate = isCelebrating ? -Math.abs(Math.sin(tick * 10) * 8) : 0;
-
-    // Idle breathing animation: nhẹ nhàng phổng lên/xuống 1-2px
     const breathOffset = isIdle ? Math.sin(tick * 2) * 1 : 0;
-
-    // Blink animation: mắt nhắm mở mỗi ~3s
     const isBlinking = Math.floor(tick * 0.3) % 10 === 0;
+
+    // Ưu tiên hiển thị Sprite PNG chuẩn từ Design Sheet nếu đã tải
+    let roleKey = 'office';
+    if (effectiveJob === 'CEO') roleKey = 'ceo';
+    else if (effectiveJob === 'IT') roleKey = 'developer';
+    else if (effectiveJob === 'DESIGNER') roleKey = 'designer';
+    else if (effectiveJob === 'LEAD') roleKey = 'hr';
+    else if (effectiveJob === 'LAN_ANH') roleKey = 'assistant';
+    else if (effectiveJob === 'ADMIN') roleKey = 'office';
+    else if (effectiveJob === 'SALES') roleKey = 'office';
+    else if (effectiveJob === 'SECURITY') roleKey = 'office';
+
+    let viewKey = 'front';
+    if (direction === 'UP') viewKey = 'back';
+    else if (direction === 'LEFT' || direction === 'RIGHT') viewKey = 'side';
+
+    const spriteKey = `${roleKey}_${viewKey}`;
+    const spriteImg = this.spriteImages.get(spriteKey);
+
+    if (spriteImg && spriteImg.complete && spriteImg.naturalWidth > 0) {
+      // 1. Bóng đổ
+      const shadowScaleX = 14 + Math.abs(walkOffset) * 0.3;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 16, shadowScaleX, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.translate(0, jumpCelebrate);
+
+      if (isWorking) {
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.roundRect(-14, -18, 28, 28, [6, 6, 4, 4]);
+        ctx.fill();
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+
+      ctx.save();
+      if (direction === 'LEFT') {
+        ctx.scale(-1, 1);
+      }
+      const bob = isMoving ? Math.sin(tick * 10) * 2.5 : breathOffset;
+      const tilt = isMoving ? Math.sin(tick * 10) * 0.04 : 0;
+      ctx.rotate(tilt);
+      ctx.drawImage(spriteImg, -18, -48 + bob, 36, 54);
+      ctx.restore();
+
+      // Bảng tên
+      const headY = -48 + breathOffset;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+      ctx.font = 'bold 9px sans-serif';
+      const textWidth = ctx.measureText(entity.name).width;
+      ctx.fillRect(-textWidth / 2 - 4, headY - 14, textWidth + 8, 12);
+      ctx.fillStyle = effectiveJob === 'CEO' ? '#38bdf8' : effectiveJob === 'LAN_ANH' ? '#f472b6' : '#f8fafc';
+      ctx.fillText(entity.name, -textWidth / 2, headY - 5);
+
+      // Status Thought Bubble
+      const floatBob = Math.sin(tick * 8) * 3;
+      const bubbleIcon = entity.statusIcon || (
+        effectiveJob === 'CEO' ? '👑' :
+        effectiveJob === 'IT' ? '</>' :
+        effectiveJob === 'DESIGNER' ? '🎨' :
+        effectiveJob === 'SALES' ? '📈' :
+        effectiveJob === 'LEAD' ? '👥' :
+        effectiveJob === 'ADMIN' ? '📋' :
+        effectiveJob === 'SECURITY' ? '🛡️' :
+        effectiveJob === 'LAN_ANH' ? '💖' : null
+      );
+
+      if (bubbleIcon) {
+        ctx.save();
+        const bX = 14;
+        const bY = headY - 18 + floatBob;
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(bX, bY, 9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(bX - 6, bY + 8, 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        if (bubbleIcon === '</>') {
+          ctx.font = 'bold 7px monospace';
+          ctx.fillStyle = '#0284c7';
+          ctx.fillText('</>', bX - 6, bY + 2.5);
+        } else {
+          ctx.font = '10px sans-serif';
+          ctx.fillText(bubbleIcon, bX - 5, bY + 3.5);
+        }
+        ctx.restore();
+      }
+
+      if (entity.speechBubble) {
+        ctx.save();
+        ctx.font = 'bold 9px sans-serif';
+        const bubbleTextWidth = ctx.measureText(entity.speechBubble).width;
+        const bW = bubbleTextWidth + 14;
+        const bH = 18;
+        const bX = -bW / 2;
+        const bY = headY - 32;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(bX, bY, bW, bH, 5);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(-4, bY + bH);
+        ctx.lineTo(0, bY + bH + 4);
+        ctx.lineTo(4, bY + bH);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.fillText(entity.speechBubble, bX + 7, bY + 12);
+        ctx.restore();
+      }
+
+      ctx.restore();
+      return;
+    }
 
     // Mirror/flip khi direction = 'LEFT'
     if (direction === 'LEFT') {
       ctx.scale(-1, 1);
     }
 
-    // 1. Bóng đổ nhân vật (Drop shadow dưới chân - lerp theo walkOffset)
+    // 1. Bóng đổ nhân vật (Drop shadow dưới chân)
     const shadowScaleX = 14 + Math.abs(walkOffset) * 0.3;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
     ctx.beginPath();
     ctx.ellipse(0, 16, shadowScaleX, 6, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -2605,142 +2775,261 @@ export class WorldRenderer {
       ctx.stroke();
     }
 
-    // 2. Chân và Giày Chibi (Limb movement & styling)
-    let shoeColor = '#0f172a'; // Giày da đen mặc định
-    if (gender === 'MALE' && roleType !== 'PLAYER') {
-      shoeColor = '#5c2c16'; // Giày da nâu nam công sở (Ảnh tham khảo 2)
-    } else if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
-      shoeColor = '#09090b'; // Giày cao gót đen nữ thanh lịch (Ảnh tham khảo 3)
+    // 2. Chân & Giày theo bảng màu chuẩn từng nhân vật (Ảnh 1 - 8)
+    let shoeColor = '#0f172a';
+    if (effectiveJob === 'CEO') {
+      shoeColor = '#7a5b47'; // Giày da nâu cao cấp (#7A5B47 - Sheet CEO)
+    } else if (effectiveJob === 'IT') {
+      shoeColor = '#3d8bff'; // Giày thể thao sneaker xanh trắng (#3D8BFF - Sheet IT)
+    } else if (effectiveJob === 'DESIGNER') {
+      shoeColor = '#6b6ee0'; // Giày sneaker tím pastel phong cách (#6B6EE0 - Sheet Designer)
+    } else if (effectiveJob === 'SALES') {
+      shoeColor = '#5b4639'; // Giày da nâu lịch lãm (#5B4639 - Sheet Sales)
+    } else if (effectiveJob === 'LEAD') {
+      shoeColor = '#1f2a44'; // Giày da màu tối (#1F2A44 - Sheet Lead)
+    } else if (effectiveJob === 'ADMIN') {
+      shoeColor = '#f1f5f9'; // Sneaker trắng tinh gọn gàng năng động (#F8F8FA - Sheet Admin)
+    } else if (effectiveJob === 'SECURITY') {
+      shoeColor = '#1e293b'; // Giày bốt chiến thuật đen bền chắc (#1F2937 - Sheet Security)
+    } else if (effectiveJob === 'LAN_ANH' || gender === 'FEMALE') {
+      shoeColor = '#09090b'; // Giày cao gót đen thanh lịch
     }
 
     ctx.fillStyle = shoeColor;
     if (direction === 'LEFT' || direction === 'RIGHT') {
       ctx.fillRect(-6 + legSwing, 10, 5, 8);
       ctx.fillRect(2 - legSwing, 10, 5, 8);
-      // Gót giày cho nữ
-      if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
+      if (effectiveJob === 'LAN_ANH') {
         ctx.fillRect(-6 + legSwing, 15, 2, 4);
         ctx.fillRect(2 - legSwing, 15, 2, 4);
       }
     } else {
       ctx.fillRect(-7, 10 + legSwing * 0.5, 6, 8);
       ctx.fillRect(2, 10 - legSwing * 0.5, 6, 8);
-      if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
+      if (effectiveJob === 'LAN_ANH') {
         ctx.fillRect(-7, 15, 2, 4);
         ctx.fillRect(6, 15, 2, 4);
       }
     }
 
-    // 3. Quần / Váy Công Sở (Pants & Skirt)
-    if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
-      // Chân váy bút chì cạp cao xẻ tà đen sang trọng (Ảnh tham khảo 3)
+    // 3. Quần / Váy Công Sở theo chuẩn thiết kế
+    if (effectiveJob === 'LAN_ANH' || (gender === 'FEMALE' && effectiveJob !== 'IT')) {
+      // Chân váy bút chì đen cạp cao có xẻ tà quyến rũ (Sheet Lan Anh)
       ctx.fillStyle = '#18181b';
       ctx.beginPath();
       ctx.roundRect(-8, 2 + walkOffset * 0.5, 16, 10, [1, 1, 2, 2]);
       ctx.fill();
-      // Đường xẻ tà bên hông tinh tế
       if (direction === 'RIGHT' || direction === 'DOWN') {
-        ctx.fillStyle = '#fed7aa'; // Lộ phần đùi/chân nhỏ qua xẻ tà
+        ctx.fillStyle = '#ffdcc4';
         ctx.fillRect(2, 7 + walkOffset * 0.5, 2, 5);
       } else if (direction === 'LEFT') {
-        ctx.fillStyle = '#fed7aa';
+        ctx.fillStyle = '#ffdcc4';
         ctx.fillRect(-4, 7 + walkOffset * 0.5, 2, 5);
       }
-      // Thắt lưng da đen khóa kim loại
       ctx.fillStyle = '#09090b';
       ctx.fillRect(-8, 1 + walkOffset * 0.5, 16, 2.5);
       ctx.fillStyle = '#fbbf24';
       ctx.fillRect(-2, 1 + walkOffset * 0.5, 4, 2.5);
     } else {
-      // Quần tây âu công sở (Ảnh tham khảo 1 & 2)
-      ctx.fillStyle = roleType === 'PLAYER' ? '#1e293b' : '#334155';
+      let pantsColor = '#1e293b';
+      if (effectiveJob === 'CEO') pantsColor = '#2e3a59'; // Xanh navy sẫm (#2E3A59)
+      else if (effectiveJob === 'IT') pantsColor = '#2d2f36'; // Quần jogger đen xám (#2D2F36)
+      else if (effectiveJob === 'DESIGNER') pantsColor = '#2d2f3a';
+      else if (effectiveJob === 'SALES') pantsColor = '#2e3a59';
+      else if (effectiveJob === 'LEAD') pantsColor = '#d8c3b1'; // Quần kaki be (#D8C3B1)
+      else if (effectiveJob === 'ADMIN') pantsColor = '#3b3f4b'; // Quần âu xám than (#3B3F4B)
+      else if (effectiveJob === 'SECURITY') pantsColor = '#1f2d4d'; // Quần bảo vệ xanh đậm (#1F2D4D)
+
+      ctx.fillStyle = pantsColor;
       ctx.fillRect(-8, 4 + walkOffset * 0.5, 16, 8);
-      // Thắt lưng da đen / nâu
-      ctx.fillStyle = roleType === 'PLAYER' ? '#09090b' : '#451a03';
+
+      // Thắt lưng da
+      const beltColor = (effectiveJob === 'CEO' || effectiveJob === 'SALES') ? '#7a5b47' : '#0f172a';
+      ctx.fillStyle = beltColor;
       ctx.fillRect(-8, 3 + walkOffset * 0.5, 16, 2.5);
-      ctx.fillStyle = '#cbd5e1'; // Khóa thắt lưng kim loại sáng
+      ctx.fillStyle = '#cbd5e1';
       ctx.fillRect(-2, 3 + walkOffset * 0.5, 4, 2.5);
     }
 
-    // 4. Áo & Thân Trên (Upper Body & Shirt / Blouse)
-    let shirtColor = '#ffffff';
-    if (roleType === 'PLAYER') {
-      shirtColor = '#ffffff'; // Áo sơ mi trắng tinh CEO trẻ trung (Ảnh 1)
-    } else if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
-      shirtColor = '#fffbeb'; // Áo lụa voan kem sang trọng (Ảnh 3)
-    } else if (roleType === 'FATHER') {
-      shirtColor = '#0f172a'; // Suit kim cương tài phiệt
-    } else {
-      shirtColor = '#93c5fd'; // Áo sơ mi xanh dương nam nhân viên (Ảnh 2)
-    }
+    // 4. Áo & Thân Trên theo đặc trưng nghề nghiệp
+    if (effectiveJob === 'CEO') {
+      // Suit Xanh Navy (#2E3A59), áo sơ mi trắng tinh bên trong (#F5F7FB), khăn cài túi ngực trắng
+      ctx.fillStyle = '#2e3a59';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
 
-    ctx.fillStyle = shirtColor;
-    ctx.beginPath();
-    ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
-    ctx.fill();
+      // Ve áo vest & Cổ sơ mi trắng chữ V
+      ctx.fillStyle = '#f5f7fb';
+      ctx.beginPath();
+      ctx.moveTo(-3, -6 + walkOffset * 0.5);
+      ctx.lineTo(0, 0 + walkOffset * 0.5);
+      ctx.lineTo(3, -6 + walkOffset * 0.5);
+      ctx.fill();
 
-    // Chi tiết Cổ áo, Cà vạt & Thẻ nhân viên đeo cổ (Lanyard ID Badge - Ảnh 2 & 3)
-    if (direction !== 'UP') {
-      // Cổ áo chữ V
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      // Khăn lụa vuông cài túi ngực trái vest
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-7, -2 + walkOffset * 0.5, 4, 1.8);
+
+    } else if (effectiveJob === 'IT') {
+      // Áo Hoodie xám than (#2D2F36) có mũ và dây kéo, bên trong áo thun logo </>
+      ctx.fillStyle = '#2d2f36';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [4, 4, 1, 1]);
+      ctx.fill();
+
+      // Áo thun lót bên trong in logo </>
+      ctx.fillStyle = '#1e1f24';
+      ctx.fillRect(-4, -5 + walkOffset * 0.5, 8, 8);
+      ctx.fillStyle = '#e7e9f3';
+      ctx.font = 'bold 6px monospace';
+      ctx.fillText('</>', -4, 0 + walkOffset * 0.5);
+
+      // Dây rút mũ hoodie trắng hai bên
+      ctx.strokeStyle = '#f8f8fa';
       ctx.lineWidth = 1;
       ctx.beginPath();
+      ctx.moveTo(-5, -3 + walkOffset * 0.5);
+      ctx.lineTo(-5, 2 + walkOffset * 0.5);
+      ctx.moveTo(5, -3 + walkOffset * 0.5);
+      ctx.lineTo(5, 2 + walkOffset * 0.5);
+      ctx.stroke();
+
+      // Tai nghe Gaming / Over-ear màu xanh neon quàng quanh cổ (#3D8BFF)
+      ctx.strokeStyle = '#3d8bff';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(0, -6 + walkOffset * 0.5, 7, 0, Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = '#3d8bff';
+      ctx.fillRect(-8, -8 + walkOffset * 0.5, 3, 4);
+      ctx.fillRect(5, -8 + walkOffset * 0.5, 3, 4);
+
+    } else if (effectiveJob === 'DESIGNER') {
+      // Áo Hoodie trắng/kem (#F4F1EC) với vệt màu sơn nghệ thuật tím (#6B6EE0)
+      ctx.fillStyle = '#f4f1ec';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [4, 4, 1, 1]);
+      ctx.fill();
+
+      // Vết màu sơn tím nghệ thuật sáng tạo
+      ctx.fillStyle = '#6b6ee0';
+      ctx.beginPath();
+      ctx.arc(3, -2 + walkOffset * 0.5, 3, 0, Math.PI * 2);
+      ctx.arc(-4, 1 + walkOffset * 0.5, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tai nghe tím pastel quanh cổ
+      ctx.strokeStyle = '#6b6ee0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -6 + walkOffset * 0.5, 7, 0, Math.PI);
+      ctx.stroke();
+
+    } else if (effectiveJob === 'SALES') {
+      // Áo sơ mi trắng (#F5F7FB), cà vạt xanh navy (#4F6AA3), thẻ đeo cổ xanh (#66B2FF)
+      ctx.fillStyle = '#f5f7fb';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
+
+      // Cà vạt xanh navy lịch sự
+      ctx.fillStyle = '#4f6aa3';
+      ctx.beginPath();
+      ctx.moveTo(-1.8, -5 + walkOffset * 0.5);
+      ctx.lineTo(1.8, -5 + walkOffset * 0.5);
+      ctx.lineTo(1.2, 3 + walkOffset * 0.5);
+      ctx.lineTo(0, 5 + walkOffset * 0.5);
+      ctx.lineTo(-1.2, 3 + walkOffset * 0.5);
+      ctx.fill();
+
+      // Dây đeo thẻ nhân viên
+      ctx.strokeStyle = '#66b2ff';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
       ctx.moveTo(-4, -6 + walkOffset * 0.5);
-      ctx.lineTo(0, -2 + walkOffset * 0.5);
+      ctx.lineTo(0, -1 + walkOffset * 0.5);
       ctx.lineTo(4, -6 + walkOffset * 0.5);
       ctx.stroke();
 
-      if (roleType === 'PLAYER') {
-        // Nam CEO: Áo sơ mi trắng phanh nhẹ nút cổ (Ảnh 1), đồng hồ đeo tay
-        ctx.fillStyle = '#fed7aa'; // Khe hở cổ áo
-        ctx.beginPath();
-        ctx.moveTo(-2, -6 + walkOffset * 0.5);
-        ctx.lineTo(0, -3 + walkOffset * 0.5);
-        ctx.lineTo(2, -6 + walkOffset * 0.5);
-        ctx.fill();
-      } else if (roleType === 'FATHER') {
-        // Cà vạt vàng kim chủ tịch
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillRect(-2, -4 + walkOffset * 0.5, 4, 8);
-      } else if (gender === 'MALE') {
-        // Cà vạt xanh navy + Dây đeo thẻ nhân viên (Ảnh 2)
-        ctx.fillStyle = '#1e3a8a';
-        ctx.fillRect(-2, -4 + walkOffset * 0.5, 4, 8);
-        // Dây thẻ xanh dương quanh cổ
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(-4, -6 + walkOffset * 0.5);
-        ctx.lineTo(0, -1 + walkOffset * 0.5);
-        ctx.lineTo(4, -6 + walkOffset * 0.5);
-        ctx.stroke();
-        // Thẻ nhân viên hình chữ nhật
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-2.5, -1 + walkOffset * 0.5, 5, 6);
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(-2.5, -1 + walkOffset * 0.5, 5, 1.5);
-      } else {
-        // Nữ nhân viên / Lan Anh: Dây thẻ xanh quanh cổ + Thẻ ID (Ảnh 3)
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 0.8;
-        ctx.beginPath();
-        ctx.moveTo(-4, -6 + walkOffset * 0.5);
-        ctx.lineTo(0, -1 + walkOffset * 0.5);
-        ctx.lineTo(4, -6 + walkOffset * 0.5);
-        ctx.stroke();
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-2, -1 + walkOffset * 0.5, 4, 5);
-      }
+    } else if (effectiveJob === 'LEAD') {
+      // Áo blazer nâu ấm (#3B2F2F, #6B4F3E) bên ngoài, sơ mi trắng bên trong
+      ctx.fillStyle = '#3b2f2f';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
+
+      ctx.fillStyle = '#f5f7fb';
+      ctx.beginPath();
+      ctx.moveTo(-3, -6 + walkOffset * 0.5);
+      ctx.lineTo(0, 0 + walkOffset * 0.5);
+      ctx.lineTo(3, -6 + walkOffset * 0.5);
+      ctx.fill();
+
+    } else if (effectiveJob === 'ADMIN') {
+      // Áo sơ mi trắng ngắn tay gọn gàng (#F7F8FC), dây thẻ xanh (#4E7CC7)
+      ctx.fillStyle = '#f7f8fc';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
+
+      ctx.strokeStyle = '#4e7cc7';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-4, -6 + walkOffset * 0.5);
+      ctx.lineTo(0, -1 + walkOffset * 0.5);
+      ctx.lineTo(4, -6 + walkOffset * 0.5);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2.5, -1 + walkOffset * 0.5, 5, 6);
+
+    } else if (effectiveJob === 'SECURITY') {
+      // Áo đồng phục xanh dương nhạt (#7FA6E6), cầu vai quân hàm xanh đậm (#1F2D4D)
+      ctx.fillStyle = '#7fa6e6';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
+
+      // Cầu vai quân hàm
+      ctx.fillStyle = '#1f2d4d';
+      ctx.fillRect(-9, -6 + walkOffset * 0.5, 4, 3);
+      ctx.fillRect(5, -6 + walkOffset * 0.5, 4, 3);
+      // Nút vàng
+      ctx.fillStyle = '#f5c542';
+      ctx.fillRect(-7.5, -5 + walkOffset * 0.5, 1.5, 1.5);
+      ctx.fillRect(6, -5 + walkOffset * 0.5, 1.5, 1.5);
+
+    } else if (effectiveJob === 'LAN_ANH') {
+      // Áo voan lụa kem sang trọng (#FFFBEB) cổ V, dây thẻ ID xanh
+      ctx.fillStyle = '#fffbeb';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
+
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(-4, -6 + walkOffset * 0.5);
+      ctx.lineTo(0, -1 + walkOffset * 0.5);
+      ctx.lineTo(4, -6 + walkOffset * 0.5);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, -1 + walkOffset * 0.5, 4, 5);
+
+    } else {
+      // Citizen hoặc mặc định
+      ctx.fillStyle = entity.outfitColor || '#475569';
+      ctx.beginPath();
+      ctx.roundRect(-9, -6 + walkOffset * 0.5, 18, 11, [3, 3, 1, 1]);
+      ctx.fill();
     }
 
-    // 5. Tay Chibi & Phụ Kiện (Laptop kẹp nách, Tablet, Cặp xách - Ảnh tham khảo 1, 2, 3)
-    ctx.fillStyle = '#fed7aa'; // Da tay
+    // 5. Tay Chibi & Phụ Kiện Đặc Trưng Cầm Tay
+    ctx.fillStyle = '#ffdcc4'; // Màu da tay
     if (isWorking) {
-      // Đang gõ phím liên tục
       ctx.fillRect(-11, -1 + workTyping, 4, 6);
       ctx.fillRect(7, -1 - workTyping, 4, 6);
     } else if (isProtesting) {
-      // Giơ biển biểu tình phản đối
       ctx.fillRect(6, -18, 4, 22);
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(-4, -28, 24, 14);
@@ -2750,24 +3039,46 @@ export class WorldRenderer {
       ctx.font = 'bold 7px sans-serif';
       ctx.fillText('ĐÌNH CÔNG', -2, -18);
     } else {
-      // Tay vung tự nhiên theo bước chân
       ctx.fillRect(-12, -2 - legSwing * 0.4, 4, 7);
       ctx.fillRect(8, -2 + legSwing * 0.4, 4, 7);
 
-      // Đồng hồ đeo tay bên tay trái (Wristwatch - Ảnh 1, 2, 3)
-      ctx.fillStyle = '#0f172a';
+      // Đồng hồ đeo tay
+      ctx.fillStyle = '#1e293b';
       ctx.fillRect(-12.5, 2 - legSwing * 0.4, 4.5, 1.5);
-      ctx.fillStyle = '#e2e8f0';
+      ctx.fillStyle = '#f8fafc';
       ctx.fillRect(-11.5, 2 - legSwing * 0.4, 2.5, 1.5);
 
-      // Laptop kẹp nách của CEO Nam (Ảnh tham khảo 1)
-      if (roleType === 'PLAYER') {
-        ctx.fillStyle = '#94a3b8'; // Vỏ nhôm nguyên khối
+      // Phụ kiện cầm theo vai trò (Ảnh tham khảo 1 - 8)
+      if (effectiveJob === 'CEO') {
+        // Laptop mỏng vỏ nhôm nguyên khối kẹp nách
+        ctx.fillStyle = '#94a3b8';
         ctx.fillRect(7, -4 + legSwing * 0.2, 5, 12);
-        ctx.fillStyle = '#f8fafc'; // Logo phản chiếu
+        ctx.fillStyle = '#f8fafc';
         ctx.fillRect(8.5, 0 + legSwing * 0.2, 2, 2);
-      } else if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
-        // Tablet / Bìa tài liệu công tác kẹp nách của nữ (Ảnh tham khảo 3)
+      } else if (effectiveJob === 'SALES') {
+        // Cặp da công tác màu nâu đậm (#5B4639 - Sheet Sales)
+        ctx.fillStyle = '#5b4639';
+        ctx.fillRect(7, -2 + legSwing * 0.2, 6, 11);
+        ctx.fillStyle = '#fbbf24'; // Khóa đồng mạ vàng
+        ctx.fillRect(8, 2 + legSwing * 0.2, 4, 2);
+      } else if (effectiveJob === 'ADMIN') {
+        // Bìa kẹp hồ sơ clipboard trắng & kẹp tài liệu (#F7F8FC - Sheet Admin)
+        ctx.fillStyle = '#7a5b47';
+        ctx.fillRect(7, -3 + legSwing * 0.2, 5.5, 11);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(7.5, -2 + legSwing * 0.2, 4.5, 9);
+      } else if (effectiveJob === 'DESIGNER') {
+        // Bút vẽ Stylus cảm ứng màu vàng nghệ thuật
+        ctx.fillStyle = '#ffb74d';
+        ctx.fillRect(9, -4 + legSwing * 0.2, 2, 9);
+      } else if (effectiveJob === 'SECURITY') {
+        // Bộ đàm bảo vệ trên vai
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(-11, -8 + walkOffset * 0.5, 3, 5);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(-10, -7 + walkOffset * 0.5, 1, 1);
+      } else if (effectiveJob === 'LAN_ANH') {
+        // Tablet mỏng kẹp nách
         ctx.fillStyle = '#334155';
         ctx.fillRect(7, -3 + legSwing * 0.2, 4.5, 11);
         ctx.fillStyle = '#38bdf8';
@@ -2775,22 +3086,22 @@ export class WorldRenderer {
       }
     }
 
-    // 6. Đầu Chibi Tỷ Lệ Lớn (Head: tỷ lệ 1:2.2, khuôn mặt tròn đáng yêu giàu biểu cảm)
+    // 6. Đầu Chibi Tỷ Lệ Lớn (Khuôn mặt tròn anime Chibi)
     const headY = -18 + walkOffset + breathOffset;
-    ctx.fillStyle = '#fed7aa'; // Màu da khuôn mặt
+    ctx.fillStyle = '#ffdcc4'; // Màu da mặt tươi tắn (#FFDCC4)
     ctx.beginPath();
     ctx.arc(0, headY, 15, 0, Math.PI * 2);
     ctx.fill();
 
-    // Má hồng Chibi (Blush)
-    ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+    // Má hồng Chibi dễ thương (Blush)
+    ctx.fillStyle = 'rgba(244, 63, 94, 0.4)';
     ctx.beginPath();
-    ctx.arc(-8, headY + 4, 3.2, 0, Math.PI * 2);
-    ctx.arc(8, headY + 4, 3.2, 0, Math.PI * 2);
+    ctx.arc(-8, headY + 4, 3, 0, Math.PI * 2);
+    ctx.arc(8, headY + 4, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hoa tai ngọc trai quý phái cho Lan Anh / Nhân viên nữ (Ảnh tham khảo 3)
-    if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
+    // Hoa tai ngọc trai cho Lan Anh
+    if (effectiveJob === 'LAN_ANH') {
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.arc(-14, headY + 5, 2, 0, Math.PI * 2);
@@ -2798,115 +3109,107 @@ export class WorldRenderer {
       ctx.fill();
     }
 
-    // 7. Mắt Anime Chibi & Biểu Cảm (Theo hướng nhìn và trạng thái tâm lý)
+    // 7. Mắt Anime Chibi & Biểu Cảm
     if (direction !== 'UP') {
       const eyeOffsetX = direction === 'LEFT' ? -3 : direction === 'RIGHT' ? 3 : 0;
-      
-      if (animationState === 'SAD' || animationState === 'STRESSED') {
-        // Mắt rưng rưng / nhíu mày căng thẳng
-        ctx.strokeStyle = '#0f172a';
+
+      if (isBlinking) {
+        ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(-5 + eyeOffsetX, headY + 1, 3, Math.PI, Math.PI * 2);
-        ctx.arc(5 + eyeOffsetX, headY + 1, 3, Math.PI, Math.PI * 2);
-        ctx.stroke();
-      } else if (animationState === 'ANGRY' || animationState === 'PROTEST') {
-        // Mắt giận dữ xếch lên
-        ctx.strokeStyle = '#b91c1c';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-7 + eyeOffsetX, headY - 1);
-        ctx.lineTo(-3 + eyeOffsetX, headY + 2);
-        ctx.moveTo(7 + eyeOffsetX, headY - 1);
-        ctx.lineTo(3 + eyeOffsetX, headY + 2);
+        ctx.moveTo(-8 + eyeOffsetX, headY);
+        ctx.lineTo(-2 + eyeOffsetX, headY);
+        ctx.moveTo(2 + eyeOffsetX, headY);
+        ctx.lineTo(8 + eyeOffsetX, headY);
         ctx.stroke();
       } else {
-        // Mắt to tròn long lanh Chibi chuẩn anime (Ảnh tham khảo 1, 2, 3)
-        const eyeColor = roleType === 'LAN_ANH' ? '#451a03' : '#0f172a';
-
-        if (isBlinking) {
-          // Blink: vẽ đường kẻ ngang thay cho mắt tròn
-          ctx.strokeStyle = eyeColor;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(-8 + eyeOffsetX, headY);
-          ctx.lineTo(-2 + eyeOffsetX, headY);
-          ctx.moveTo(2 + eyeOffsetX, headY);
-          ctx.lineTo(8 + eyeOffsetX, headY);
-          ctx.stroke();
-        } else {
-          ctx.fillStyle = eyeColor;
-          ctx.beginPath();
-          ctx.arc(-5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
-          ctx.arc(5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Đốm sáng trong mắt (Anime specular reflection)
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(-6 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
-          ctx.arc(4 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.beginPath();
-          ctx.arc(-4 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
-          ctx.arc(6 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        // Lông mày biểu cảm
-        ctx.strokeStyle = roleType === 'LAN_ANH' ? '#5c2c16' : '#0f172a';
-        ctx.lineWidth = 1.2;
+        const eyeColor = effectiveJob === 'LAN_ANH' ? '#451a03' : '#1e293b';
+        ctx.fillStyle = eyeColor;
         ctx.beginPath();
-        ctx.moveTo(-8 + eyeOffsetX, headY - 5);
-        ctx.lineTo(-3 + eyeOffsetX, headY - 4);
-        ctx.moveTo(8 + eyeOffsetX, headY - 5);
-        ctx.lineTo(3 + eyeOffsetX, headY - 4);
-        ctx.stroke();
+        ctx.arc(-5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
+        ctx.arc(5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Đốm sáng trong mắt anime
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-6 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
+        ctx.arc(4 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(-4 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
+        ctx.arc(6 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // Miệng (Mouth)
+      // Lông mày
+      ctx.strokeStyle = effectiveJob === 'LAN_ANH' ? '#5c2c16' : '#1e293b';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-8 + eyeOffsetX, headY - 5);
+      ctx.lineTo(-3 + eyeOffsetX, headY - 4);
+      ctx.moveTo(8 + eyeOffsetX, headY - 5);
+      ctx.lineTo(3 + eyeOffsetX, headY - 4);
+      ctx.stroke();
+
+      // Miệng mỉm cười thân thiện
       ctx.strokeStyle = '#0f172a';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       if (animationState === 'HAPPY' || animationState === 'CELEBRATE') {
         ctx.arc(eyeOffsetX, headY + 6, 3, 0, Math.PI);
-      } else if (animationState === 'TALK') {
-        const talkMouth = Math.sin(tick * 15) > 0;
-        if (talkMouth) {
-          ctx.arc(eyeOffsetX, headY + 6, 2.5, 0, Math.PI * 2);
-        } else {
-          ctx.moveTo(eyeOffsetX - 2, headY + 6);
-          ctx.lineTo(eyeOffsetX + 2, headY + 6);
-        }
-      } else if (animationState === 'ANGRY') {
-        ctx.moveTo(eyeOffsetX - 3, headY + 7);
-        ctx.lineTo(eyeOffsetX + 3, headY + 5);
       } else {
         ctx.arc(eyeOffsetX, headY + 5, 2, 0.1, Math.PI - 0.1);
       }
       ctx.stroke();
 
-      // Kính mắt nếu có
-      if (entity.hasGlasses) {
-        ctx.strokeStyle = '#0284c7';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-9 + eyeOffsetX, headY - 3, 7, 7);
-        ctx.strokeRect(2 + eyeOffsetX, headY - 3, 7, 7);
-        ctx.beginPath();
-        ctx.moveTo(-2 + eyeOffsetX, headY);
-        ctx.lineTo(2 + eyeOffsetX, headY);
-        ctx.stroke();
+      // Kính mắt nếu là IT hoặc Admin
+      if (effectiveJob === 'IT' || effectiveJob === 'ADMIN' || entity.hasGlasses) {
+        ctx.strokeStyle = effectiveJob === 'IT' ? '#2d2f36' : '#4e7cc7';
+        ctx.lineWidth = 1.4;
+        // Kính tròn cho IT (Sheet IT) / Chữ nhật cho Admin
+        if (effectiveJob === 'IT') {
+          ctx.beginPath();
+          ctx.arc(-5 + eyeOffsetX, headY, 4, 0, Math.PI * 2);
+          ctx.arc(5 + eyeOffsetX, headY, 4, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-1 + eyeOffsetX, headY);
+          ctx.lineTo(1 + eyeOffsetX, headY);
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(-9 + eyeOffsetX, headY - 3, 7, 6.5);
+          ctx.strokeRect(2 + eyeOffsetX, headY - 3, 7, 6.5);
+          ctx.beginPath();
+          ctx.moveTo(-2 + eyeOffsetX, headY);
+          ctx.lineTo(2 + eyeOffsetX, headY);
+          ctx.stroke();
+        }
       }
     }
 
-    // 8. Kiểu Tóc Đặc Trưng & Layer Đa Tầng (Chi tiết đúng theo 8 ảnh tham khảo)
-    if (roleType === 'LAN_ANH' || gender === 'FEMALE') {
-      // Tóc Nâu Hạt Dẻ Dài Uốn Lượn Sóng Bồng Bềnh (Ảnh tham khảo 3: Lan Anh)
+    // 8. Mũ Bảo Vệ & Kiểu Tóc Đặc Trưng Từng Vai Trò
+    if (effectiveJob === 'SECURITY') {
+      // Mũ kẹp lưỡi trai cảnh vệ xanh đậm (#1F2D4D), huy hiệu vàng (#F5C542)
+      ctx.fillStyle = '#1f2d4d';
+      ctx.beginPath();
+      ctx.roundRect(-16, headY - 14, 32, 12, [8, 8, 0, 0]);
+      ctx.fill();
+      // Vành lưỡi trai đen bóng phía trước
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-17, headY - 5, 34, 4);
+      // Huy hiệu ngôi sao vàng đúc nổi giữa mũ
+      ctx.fillStyle = '#f5c542';
+      ctx.beginPath();
+      ctx.arc(0, headY - 9, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (effectiveJob === 'LAN_ANH') {
+      // Tóc Nâu Hạt Dẻ Dài Uốn Lượn Sóng Bồng Bềnh (Sheet Lan Anh)
       const chestnutBase = '#3a1808';
       const chestnutHighlight = '#5c2d16';
 
       ctx.fillStyle = chestnutBase;
-      // Khối tóc sau buông xõa dài xuống quá vai
       ctx.beginPath();
       ctx.arc(0, headY - 4, 17, Math.PI, Math.PI * 2);
       ctx.fill();
@@ -2917,7 +3220,7 @@ export class WorldRenderer {
       ctx.roundRect(10, headY - 4, 7, 28, [2, 2, 5, 5]);
       ctx.fill();
 
-      // Mái tóc rẽ ngôi lệch duyên dáng & lọn tóc bồng bềnh
+      // Mái tóc rẽ ngôi bồng bềnh
       ctx.fillStyle = chestnutHighlight;
       ctx.beginPath();
       ctx.moveTo(-16, headY - 4);
@@ -2928,29 +3231,17 @@ export class WorldRenderer {
       ctx.closePath();
       ctx.fill();
 
-      // Nếu quay lưng (UP): hiển thị trọn vẹn mái tóc uốn xoăn sóng dài tuyệt đẹp
-      if (direction === 'UP') {
-        ctx.fillStyle = chestnutBase;
-        ctx.beginPath();
-        ctx.roundRect(-15, headY - 4, 30, 26, [0, 0, 12, 12]);
-        ctx.fill();
-        ctx.fillStyle = chestnutHighlight;
-        for (let wave = -10; wave <= 10; wave += 5) {
-          ctx.fillRect(wave, headY + 4, 2, 14);
-        }
-      }
+    } else if (effectiveJob === 'CEO') {
+      // Tóc Đen Tự Nhiên Rẽ Ngôi Lịch Lãm Khởi Nghiệp (Sheet CEO - #3B2F2F)
+      const hairBase = '#3b2f2f';
+      const hairHighlight = '#5b6b8f';
 
-    } else if (roleType === 'PLAYER') {
-      // Tóc Đen Tự Nhiên Bồng Bềnh Từng Tầng Đậm Chất Nam Chính Khởi Nghiệp (Ảnh tham khảo 1)
-      const blackBase = '#111827';
-      const blackHighlight = '#374151';
-
-      ctx.fillStyle = blackBase;
+      ctx.fillStyle = hairBase;
       ctx.beginPath();
       ctx.arc(0, headY - 3, 16.5, Math.PI, Math.PI * 2);
       ctx.fill();
 
-      // Từng lọn tóc mái rối tự nhiên rủ xuống trán
+      // Từng lọn tóc mái vuốt sang bên
       ctx.beginPath();
       ctx.moveTo(-15, headY - 3);
       ctx.lineTo(-9, headY + 1);
@@ -2964,35 +3255,49 @@ export class WorldRenderer {
       ctx.closePath();
       ctx.fill();
 
-      // Highlight ánh sáng xanh than trên đỉnh tóc
-      ctx.fillStyle = blackHighlight;
+      // Ánh sáng xanh navy trên đỉnh tóc
+      ctx.strokeStyle = hairHighlight;
+      ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(2, headY - 12, 11, Math.PI * 1.1, Math.PI * 1.7);
-      ctx.lineWidth = 2.5;
-      ctx.strokeStyle = blackHighlight;
+      ctx.arc(2, headY - 12, 10, Math.PI * 1.1, Math.PI * 1.7);
       ctx.stroke();
 
-    } else if (roleType === 'FATHER') {
-      // Tóc hoa râm chải ngược quyền lực (Hoàng Nam)
-      ctx.fillStyle = '#64748b';
+    } else if (effectiveJob === 'IT') {
+      // Tóc xoăn bồng bềnh tự nhiên của IT Developer (Sheet IT)
+      const itHair = '#2d2f36';
+      ctx.fillStyle = itHair;
       ctx.beginPath();
-      ctx.arc(0, headY - 3, 16, Math.PI, Math.PI * 2);
+      ctx.arc(0, headY - 3, 16.5, Math.PI, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(-12, headY - 14, 24, 4);
+
+      // Lọn tóc mái uốn xoăn nhẹ rủ xuống trán
+      ctx.beginPath();
+      ctx.arc(-8, headY - 1, 4, 0, Math.PI * 2);
+      ctx.arc(-2, headY, 4, 0, Math.PI * 2);
+      ctx.arc(5, headY - 1, 4, 0, Math.PI * 2);
+      ctx.arc(11, headY - 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (effectiveJob === 'DESIGNER' && gender === 'FEMALE') {
+      // Nữ Designer tóc hồng pastel đội mũ nồi beret đen (Sheet Females #4)
+      ctx.fillStyle = '#f472b6'; // Hồng pastel
+      ctx.beginPath();
+      ctx.arc(0, headY - 3, 16.5, Math.PI, Math.PI * 2);
+      ctx.fill();
+      // Mũ beret đen lệch sang chảnh
+      ctx.fillStyle = '#1e1b4b';
+      ctx.beginPath();
+      ctx.ellipse(-2, headY - 13, 15, 6, -0.2, 0, Math.PI * 2);
+      ctx.fill();
 
     } else {
-      // Nam Nhân Viên / Developer: Tóc Nâu Vuốt Ngắn Hiện Đại Có Nếp (Ảnh tham khảo 2)
-      const brownBase = '#3a2013';
-      const brownHighlight = '#6d3c1a';
-
-      ctx.fillStyle = brownBase;
+      // Tóc nam công sở hiện đại có nếp (Sheets Admin / Sales / Lead)
+      const hairBase = effectiveJob === 'LEAD' ? '#3b2f2f' : '#2d2f36';
+      ctx.fillStyle = hairBase;
       ctx.beginPath();
       ctx.arc(0, headY - 3, 16, Math.PI, Math.PI * 2);
       ctx.fill();
 
-      // Mái tóc rẽ ngôi 7/3 vuốt nếp bảnh bao
-      ctx.fillStyle = brownHighlight;
       ctx.beginPath();
       ctx.moveTo(-14, headY - 3);
       ctx.lineTo(-4, headY - 1);
@@ -3005,32 +3310,59 @@ export class WorldRenderer {
       ctx.fill();
     }
 
-    // 8. Tên & Danh Xưng Phía Trên Đầu
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    // 9. Bảng Tên Phía Trên Đầu
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
     ctx.font = 'bold 9px sans-serif';
     const textWidth = ctx.measureText(entity.name).width;
     ctx.fillRect(-textWidth / 2 - 4, headY - 28, textWidth + 8, 12);
-    ctx.fillStyle = roleType === 'PLAYER' ? '#38bdf8' : roleType === 'LAN_ANH' ? '#f472b6' : '#f8fafc';
+    ctx.fillStyle = effectiveJob === 'CEO' ? '#38bdf8' : effectiveJob === 'LAN_ANH' ? '#f472b6' : '#f8fafc';
     ctx.fillText(entity.name, -textWidth / 2, headY - 19);
 
-    // 9. Floating Emoticon / Status Badge (💻, ☕, 😡, ❤️, ⚠️, 😴)
-    let emote = entity.statusIcon;
-    if (!emote) {
-      if (animationState === 'WORK') emote = '💻';
-      else if (animationState === 'CELEBRATE') emote = '🎉';
-      else if (animationState === 'STRESSED') emote = '⚡';
-      else if (animationState === 'TIRED') emote = '😴';
-      else if (animationState === 'HAPPY') emote = '✨';
-      else if (animationState === 'PROTEST') emote = '⚠️';
+    // 10. Status Thought Bubble chuẩn 8 Design Sheets (👑 CEO, </> IT, 🎨 Designer, 📈 Sales, 👥 Lead, 📋 Admin, 🛡️ Security)
+    const floatBob = Math.sin(tick * 8) * 3;
+    const bubbleIcon = entity.statusIcon || (
+      effectiveJob === 'CEO' ? '👑' :
+      effectiveJob === 'IT' ? '</>' :
+      effectiveJob === 'DESIGNER' ? '🎨' :
+      effectiveJob === 'SALES' ? '📈' :
+      effectiveJob === 'LEAD' ? '👥' :
+      effectiveJob === 'ADMIN' ? '📋' :
+      effectiveJob === 'SECURITY' ? '🛡️' :
+      effectiveJob === 'LAN_ANH' ? '💖' : null
+    );
+
+    if (bubbleIcon) {
+      // Khung bóng tròn nổi Chibi sắc nét
+      ctx.save();
+      const bX = 14;
+      const bY = headY - 30 + floatBob;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(bX, bY, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Đuôi bóng nhỏ
+      ctx.beginPath();
+      ctx.arc(bX - 6, bY + 8, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      if (bubbleIcon === '</>') {
+        ctx.font = 'bold 7px monospace';
+        ctx.fillStyle = '#0284c7';
+        ctx.fillText('</>', bX - 6, bY + 2.5);
+      } else {
+        ctx.font = '10px sans-serif';
+        ctx.fillText(bubbleIcon, bX - 5, bY + 3.5);
+      }
+      ctx.restore();
     }
 
-    if (emote) {
-      const floatBob = Math.sin(tick * 8) * 3;
-      ctx.font = '12px sans-serif';
-      ctx.fillText(emote, 12, headY - 22 + floatBob);
-    }
-
-    // 10. Speech Bubble hoặc Bong bóng suy nghĩ `...` chuẩn RPG Chibi (Ảnh tham khảo 4)
+    // 11. Speech Bubble nếu có thoại
     if (entity.speechBubble) {
       ctx.save();
       ctx.font = 'bold 9px sans-serif';
@@ -3038,9 +3370,8 @@ export class WorldRenderer {
       const bW = bubbleTextWidth + 14;
       const bH = 18;
       const bX = -bW / 2;
-      const bY = headY - 44;
+      const bY = headY - 46;
 
-      // Hộp bong bóng trắng bo viền xanh/cam
       ctx.fillStyle = '#ffffff';
       ctx.strokeStyle = '#0284c7';
       ctx.lineWidth = 1.5;
@@ -3049,7 +3380,6 @@ export class WorldRenderer {
       ctx.fill();
       ctx.stroke();
 
-      // Đuôi nhọn trỏ vào đầu
       ctx.beginPath();
       ctx.moveTo(-4, bY + bH);
       ctx.lineTo(0, bY + bH + 4);
@@ -3058,41 +3388,8 @@ export class WorldRenderer {
       ctx.fill();
       ctx.stroke();
 
-      // Text bên trong bong bóng
       ctx.fillStyle = '#0f172a';
       ctx.fillText(entity.speechBubble, bX + 7, bY + 12);
-      ctx.restore();
-    } else if (roleType === 'EMPLOYEE' && animationState === 'IDLE') {
-      // Bong bóng suy nghĩ `...` như trong ảnh BrownDust 2 / K-RPG office (Ảnh 4)
-      ctx.save();
-      const bX = -12;
-      const bY = headY - 38;
-      const bW = 24;
-      const bH = 14;
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(bX, bY, bW, bH, 7);
-      ctx.fill();
-      ctx.stroke();
-
-      // 3 chấm nhỏ
-      const dotPulse = Math.floor((tick * 3) % 4);
-      ctx.fillStyle = '#475569';
-      for (let d = 0; d < 3; d++) {
-        if (d <= dotPulse) {
-          ctx.beginPath();
-          ctx.arc(bX + 6 + d * 6, bY + 7, 1.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // Đuôi bong bóng tròn nhỏ trỏ vào đầu
-      ctx.beginPath();
-      ctx.arc(0, bY + bH + 3, 2, 0, Math.PI * 2);
-      ctx.fill();
       ctx.restore();
     }
 

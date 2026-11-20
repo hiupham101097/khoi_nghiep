@@ -27,7 +27,7 @@ export const DialogModal: React.FC<DialogModalProps> = ({ gsm }) => {
 
   if (!dialog) return null;
 
-  // Cấu hình avatar theo nhân vật
+  // Cấu hình avatar theo nhân vật chuẩn Visual Novel / RPG
   const getSpeakerStyle = () => {
     switch (dialog.speaker) {
       case 'FATHER':
@@ -35,42 +35,77 @@ export const DialogModal: React.FC<DialogModalProps> = ({ gsm }) => {
           title: 'Ông Hoàng Thế Vinh',
           role: 'Chủ Tịch Vinh Phát Group (Bố Lan Anh)',
           avatar: '👨‍💼',
+          image: '/characters/lead.jpg',
           bgGradient: 'from-amber-900/80 to-slate-900',
-          borderColor: 'border-amber-500/60',
-          tagColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+          borderColor: 'border-amber-500/80',
+          tagColor: 'bg-amber-500/20 text-amber-300 border-amber-500/50'
         };
       case 'LAN_ANH':
         return {
           title: 'Hoàng Lan Anh',
           role: 'Người Yêu & Giám Đốc Sáng Tạo',
           avatar: '👩‍💼',
+          image: '/characters/lan_anh.jpg',
           bgGradient: 'from-pink-900/80 to-slate-900',
-          borderColor: 'border-pink-500/60',
-          tagColor: 'bg-pink-500/20 text-pink-300 border-pink-500/40'
+          borderColor: 'border-pink-500/80',
+          tagColor: 'bg-pink-500/20 text-pink-300 border-pink-500/50'
+        };
+      case 'SECURITY':
+        return {
+          title: dialog.title || 'Bác Ba (Bảo Vệ)',
+          role: 'Tổ Trưởng Bảo Vệ StartUp Tower',
+          avatar: '👮',
+          image: '/characters/security.jpg',
+          bgGradient: 'from-cyan-900/80 to-slate-900',
+          borderColor: 'border-cyan-500/80',
+          tagColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50'
         };
       case 'EMPLOYEE':
         return {
           title: dialog.title || 'Nhân Viên Công Ty',
-          role: 'Đội Ngũ Phát Triển NextGen Solutions',
+          role: 'Đội Ngũ Kỹ Thuật NextGen Solutions',
           avatar: '👨‍💻',
+          image: '/characters/it.jpg',
           bgGradient: 'from-blue-900/80 to-slate-900',
-          borderColor: 'border-blue-500/60',
-          tagColor: 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+          borderColor: 'border-blue-500/80',
+          tagColor: 'bg-blue-500/20 text-blue-300 border-blue-500/50'
+        };
+      case 'CEO':
+        return {
+          title: 'CEO Khởi Nghiệp',
+          role: 'Nhà Sáng Lập & Giám Đốc Điều Hành',
+          avatar: '👑',
+          image: '/characters/ceo.jpg',
+          bgGradient: 'from-indigo-900/80 to-slate-900',
+          borderColor: 'border-indigo-500/80',
+          tagColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50'
         };
       case 'BANKER':
         return {
           title: 'Chuyên Viên Tín Dụng V-Bank',
           role: 'Bộ Phận Khách Hàng Doanh Nghiệp',
           avatar: '🏦',
+          image: '/characters/admin.jpg',
           bgGradient: 'from-emerald-900/80 to-slate-900',
-          borderColor: 'border-emerald-500/60',
-          tagColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+          borderColor: 'border-emerald-500/80',
+          tagColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+        };
+      case 'FREELANCER':
+        return {
+          title: 'Anh Nam (Senior Dev)',
+          role: 'Lập Trình Viên Tự Do (Freelancer)',
+          avatar: '💻',
+          image: '/characters/it.jpg',
+          bgGradient: 'from-purple-900/80 to-slate-900',
+          borderColor: 'border-purple-500/80',
+          tagColor: 'bg-purple-500/20 text-purple-300 border-purple-500/50'
         };
       default:
         return {
           title: dialog.title || 'Thông Báo',
           role: 'CEO Empire Simulation',
           avatar: '💬',
+          image: undefined,
           bgGradient: 'from-slate-800 to-slate-900',
           borderColor: 'border-sky-500/60',
           tagColor: 'bg-sky-500/20 text-sky-300 border-sky-500/40'
@@ -86,9 +121,22 @@ export const DialogModal: React.FC<DialogModalProps> = ({ gsm }) => {
         {/* Khung chân dung & Tên nhân vật nổi phía trên hộp thoại */}
         <div className="flex items-end gap-3 sm:gap-4 mb-[-8px] ml-4 sm:ml-8 relative z-10">
           <div
-            className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br ${style.bgGradient} border-2 ${style.borderColor} shadow-2xl flex items-center justify-center text-3xl sm:text-4xl shadow-sky-500/20 transform -rotate-2 hover:rotate-0 transition-transform`}
+            className={`w-16 h-16 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${style.bgGradient} border-2 ${style.borderColor} shadow-2xl overflow-hidden relative shadow-sky-500/20 transform -rotate-2 hover:rotate-0 transition-transform shrink-0`}
           >
-            {style.avatar}
+            {style.image ? (
+              <img
+                src={style.image}
+                alt={style.title}
+                className="w-full h-full object-cover object-top scale-110"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-3xl sm:text-4xl">
+                {style.avatar}
+              </div>
+            )}
           </div>
           <div className="bg-slate-950/95 px-4 sm:px-5 py-1.5 rounded-t-xl border-t-2 border-x-2 border-slate-700/80 shadow-lg backdrop-blur-md">
             <div className="flex items-center gap-2">

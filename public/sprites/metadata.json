@@ -1,0 +1,242 @@
+{
+  "frame_size": [
+    128,
+    192
+  ],
+  "sheet_dimensions": [
+    768,
+    576
+  ],
+  "orientation_rows": [
+    "front",
+    "side",
+    "back"
+  ],
+  "character_columns": [
+    "ceo",
+    "office",
+    "developer",
+    "designer",
+    "hr",
+    "assistant"
+  ],
+  "frames": [
+    {
+      "name": "ceo_front",
+      "image": "ceo_front.png",
+      "sheet_rect": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "ceo",
+      "view": "front"
+    },
+    {
+      "name": "ceo_side",
+      "image": "ceo_side.png",
+      "sheet_rect": {
+        "x": 0,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "ceo",
+      "view": "side"
+    },
+    {
+      "name": "ceo_back",
+      "image": "ceo_back.png",
+      "sheet_rect": {
+        "x": 0,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "ceo",
+      "view": "back"
+    },
+    {
+      "name": "office_front",
+      "image": "office_front.png",
+      "sheet_rect": {
+        "x": 128,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "office",
+      "view": "front"
+    },
+    {
+      "name": "office_side",
+      "image": "office_side.png",
+      "sheet_rect": {
+        "x": 128,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "office",
+      "view": "side"
+    },
+    {
+      "name": "office_back",
+      "image": "office_back.png",
+      "sheet_rect": {
+        "x": 128,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "office",
+      "view": "back"
+    },
+    {
+      "name": "developer_front",
+      "image": "developer_front.png",
+      "sheet_rect": {
+        "x": 256,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "developer",
+      "view": "front"
+    },
+    {
+      "name": "developer_side",
+      "image": "developer_side.png",
+      "sheet_rect": {
+        "x": 256,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "developer",
+      "view": "side"
+    },
+    {
+      "name": "developer_back",
+      "image": "developer_back.png",
+      "sheet_rect": {
+        "x": 256,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "developer",
+      "view": "back"
+    },
+    {
+      "name": "designer_front",
+      "image": "designer_front.png",
+      "sheet_rect": {
+        "x": 384,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "designer",
+      "view": "front"
+    },
+    {
+      "name": "designer_side",
+      "image": "designer_side.png",
+      "sheet_rect": {
+        "x": 384,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "designer",
+      "view": "side"
+    },
+    {
+      "name": "designer_back",
+      "image": "designer_back.png",
+      "sheet_rect": {
+        "x": 384,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "designer",
+      "view": "back"
+    },
+    {
+      "name": "hr_front",
+      "image": "hr_front.png",
+      "sheet_rect": {
+        "x": 512,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "hr",
+      "view": "front"
+    },
+    {
+      "name": "hr_side",
+      "image": "hr_side.png",
+      "sheet_rect": {
+        "x": 512,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "hr",
+      "view": "side"
+    },
+    {
+      "name": "hr_back",
+      "image": "hr_back.png",
+      "sheet_rect": {
+        "x": 512,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "hr",
+      "view": "back"
+    },
+    {
+      "name": "assistant_front",
+      "image": "assistant_front.png",
+      "sheet_rect": {
+        "x": 640,
+        "y": 0,
+        "w": 128,
+        "h": 192
+      },
+      "role": "assistant",
+      "view": "front"
+    },
+    {
+      "name": "assistant_side",
+      "image": "assistant_side.png",
+      "sheet_rect": {
+        "x": 640,
+        "y": 192,
+        "w": 128,
+        "h": 192
+      },
+      "role": "assistant",
+      "view": "side"
+    },
+    {
+      "name": "assistant_back",
+      "image": "assistant_back.png",
+      "sheet_rect": {
+        "x": 640,
+        "y": 384,
+        "w": 128,
+        "h": 192
+      },
+      "role": "assistant",
+      "view": "back"
+    }
+  ],
+  "note": "Concept sprites; manually refine edges and add left view and animation frames before production."
+}

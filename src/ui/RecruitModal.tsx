@@ -39,6 +39,20 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
   const currentOffice = AVAILABLE_OFFICES.find((o) => o.id === gsm.currentOfficeId) || AVAILABLE_OFFICES[0];
   const isOfficeFull = gsm.employees.length >= currentOffice.maxDesks;
 
+  const getCandidatePortrait = (cand: CandidateEntity): string => {
+    if (cand.role === 'DESIGNER') return '/characters/designer.jpg';
+    if (cand.role === 'FRONTEND' || cand.role === 'BACKEND' || cand.role === 'FULLSTACK') {
+      return '/characters/it.jpg';
+    }
+    if (cand.role === 'PRODUCT_MANAGER') {
+      return '/characters/lead.jpg';
+    }
+    if (cand.gender === 'FEMALE') {
+      return '/characters/females.jpg';
+    }
+    return '/characters/admin.jpg';
+  };
+
   const tierFees: Record<RecruitmentTier, number> = {
     STANDARD: 1000000,
     SPONSORED_TOPCV: 5000000,
@@ -211,8 +225,15 @@ export const RecruitModal: React.FC<RecruitModalProps> = ({ gsm, onClose }) => {
               <div key={cand.id} className="bg-slate-800/80 border border-slate-700 p-4 sm:p-5 rounded-xl space-y-3.5">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-xl sm:text-2xl shrink-0">
-                      {cand.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-700 border-2 border-sky-400 overflow-hidden shadow-lg shrink-0">
+                      <img
+                        src={getCandidatePortrait(cand)}
+                        alt={cand.name}
+                        className="w-full h-full object-cover object-top scale-110"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-100 flex items-center gap-2 flex-wrap text-sm sm:text-base">

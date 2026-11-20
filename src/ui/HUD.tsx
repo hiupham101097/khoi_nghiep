@@ -486,6 +486,33 @@ export const HUD: React.FC<HUDProps> = ({
           <span className="hidden sm:inline">CEO Suite</span>
         </button>
 
+        {/* Chuyển nhanh giữa Văn Phòng và Thành Phố (Ảnh tham khảo 3: "Lobby / City") */}
+        <button
+          onClick={() => {
+            if (gsm.currentSceneId === 'OFFICE' || gsm.currentSceneId === 'CEO_OFFICE') {
+              gsm.switchScene('CITY', { x: 520, y: 270 });
+            } else {
+              gsm.switchScene('OFFICE', { x: 380, y: 470 });
+            }
+            soundManager.playClick();
+          }}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          title="Chuyển Cảnh nhanh (Văn Phòng ⇆ Thành Phố)"
+        >
+          <MapPin className="w-3.5 h-3.5 text-sky-400" />
+          <span className="hidden md:inline">{gsm.currentSceneId === 'OFFICE' || gsm.currentSceneId === 'CEO_OFFICE' ? 'Ra Phố' : 'Vào VP'}</span>
+        </button>
+
+        {/* Họp toàn thể công ty (Standup Meeting - Ảnh tham khảo 3: "Promotion / Meeting") */}
+        <button
+          onClick={() => gsm.callAllHandsMeeting()}
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-600/50 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+          title="Họp toàn thể nhân viên (+15 Tinh thần)"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden lg:inline">Họp All-Hands</span>
+        </button>
+
         <button
           onClick={handlePantryCoffee}
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"

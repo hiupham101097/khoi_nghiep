@@ -154,6 +154,16 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
         actionType: 'ENTER_SCENE',
         targetScene: 'COURT',
         targetSpawn: { x: 360, y: 430 }
+      },
+      {
+        id: 'npc_security_zone',
+        name: 'Bác Ba - Bảo Vệ StartUp Tower',
+        x: 420,
+        y: 220,
+        width: 80,
+        height: 65,
+        prompt: 'Nhấn [E] để trò chuyện với Bác Ba Bảo Vệ',
+        actionType: 'TALK_NPC'
       }
     ],
     deskPositions: []

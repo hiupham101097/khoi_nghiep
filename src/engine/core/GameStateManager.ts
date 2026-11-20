@@ -88,7 +88,7 @@ export class GameStateManager {
   public activeDialog: {
     title?: string;
     message: string;
-    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SYSTEM';
+    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SECURITY' | 'FREELANCER' | 'SYSTEM' | 'CEO';
     choices?: { text: string; action: () => void }[];
   } | null = null;
   public openDashboardTab: 'OVERVIEW' | 'HR' | 'FINANCE' | 'PROJECTS' | 'OFFICE' | 'LEGAL' | null = null;
@@ -99,6 +99,7 @@ export class GameStateManager {
   public isSaveMenuOpen: boolean = false;
   public selectedEmployeeFor1on1: EmployeeAIEntity | null = null;
   private aiDecisionTimer: number = 0;
+  private workSprintTimer: number = 0;
 
   // Listeners cập nhật UI React
   private changeListeners: (() => void)[] = [];
@@ -112,7 +113,7 @@ export class GameStateManager {
 
   public showDialog(
     message: string,
-    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SYSTEM' = 'SYSTEM',
+    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SECURITY' | 'FREELANCER' | 'SYSTEM' | 'CEO' = 'SYSTEM',
     title?: string,
     choices?: { text: string; action: () => void }[]
   ) {
@@ -434,6 +435,15 @@ export class GameStateManager {
             isDailyStandup
           );
         });
+
+        // Mô phỏng tiến độ dự án thời gian thực (Micro-Sprint) trong giờ làm việc
+        if (isWorkHour || isOT) {
+          this.workSprintTimer += deltaTime;
+          if (this.workSprintTimer >= 2.5) {
+            this.workSprintTimer = 0;
+            this.simulateMicroSprint();
+          }
+        }
       }
 
       // 4. Kiểm tra điều kiện Ending tức thì
@@ -503,12 +513,92 @@ export class GameStateManager {
           this.talkWithFather();
         } else if (this.currentSceneId === 'CAFE') {
           this.dateWithLanAnh();
+        } else if (this.currentSceneId === 'CITY') {
+          this.talkWithSecurityGuard();
         }
         break;
 
       default:
         break;
     }
+  }
+
+  // Mô phỏng tiến độ dự án thời gian thực (Micro-Sprint)
+  private simulateMicroSprint() {
+    const active = this.activeProjects.find((p) => p.status === 'IN_PROGRESS' || p.status === 'OVERDUE');
+    if (!active) return;
+
+    const workingEmployees = this.employees.filter((e) => e.currentState === 'WORK' && !e.isStriking);
+    if (workingEmployees.length === 0) return;
+
+    let workDelta = 0;
+    workingEmployees.forEach((emp) => {
+      const spd = (emp.speed || 40) / 40;
+      const qlt = (emp.quality || 50) / 100;
+      workDelta += spd * qlt * 1.6;
+    });
+
+    active.completedWorkUnits = Math.min(active.totalWorkUnits, active.completedWorkUnits + workDelta);
+
+    // Hiệu ứng floating text ngẫu nhiên trên bàn làm việc
+    if (Math.random() < 0.4) {
+      const luckyEmp = workingEmployees[Math.floor(Math.random() * workingEmployees.length)];
+      const deskIdx = this.employees.indexOf(luckyEmp);
+      const deskPos = this.currentScene.deskPositions[deskIdx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
+      const microMessages = [
+        '+Code ⚡',
+        'Commit 🚀',
+        '🎨 UI Done',
+        'Fix Bug 🐛',
+        'PR Merged 💻',
+        'Unit Test Pass ✅'
+      ];
+      const msg = microMessages[Math.floor(Math.random() * microMessages.length)];
+      this.addFloatingText(msg, deskPos.x, deskPos.y - 25, '#38bdf8');
+    }
+
+    // Nếu dự án đã đạt 100% khối lượng: tự động bàn giao và thu tiền
+    if (active.completedWorkUnits >= active.totalWorkUnits && active.status !== 'COMPLETED') {
+      const { payout, reputationGain } = ProjectManager.deliverProject(active);
+      this.playerStats.cash += payout;
+      this.monthlyRevenueAccumulated += payout;
+      this.playerStats.reputation = Math.min(100, this.playerStats.reputation + reputationGain);
+      this.completedProjectsCount += 1;
+      this.addFloatingText(`🎉 HOÀN THÀNH: +${payout.toLocaleString('vi-VN')}đ`, 380, 220, '#22c55e');
+      soundManager.playCashEarned();
+      this.decisionLog.push(`Hoàn thành & Bàn giao dự án: ${active.name}. Thu về ${payout.toLocaleString('vi-VN')} VNĐ.`);
+      
+      this.showDialog(
+        `Toàn đội ngũ vừa hoàn thành xuất sắc dự án "${active.name}"! Khách hàng đã nghiệm thu và thanh toán toàn bộ hợp đồng trị giá ${payout.toLocaleString('vi-VN')} VNĐ! Uy tín công ty tăng +${reputationGain} điểm!`,
+        'EMPLOYEE',
+        'DỰ ÁN XUẤT XƯỞNG THÀNH CÔNG! 🚀'
+      );
+    }
+  }
+
+  // Đối thoại với Bác Ba (Bảo Vệ StartUp Tower)
+  public talkWithSecurityGuard() {
+    soundManager.playClick();
+    this.showDialog(
+      'Chào CEO trẻ! Tòa StartUp Tower này bao năm qua bác thấy nhiều bạn trẻ khởi nghiệp rồi. Ai kiên trì nhận hợp đồng phần mềm, trả lương nhân viên đúng hạn, không đầu cơ liều lĩnh thì sớm muộn cũng thành kỳ lân! Khi nào công ty cần vốn nhớ sang ngân hàng V-Bank đối diện phố nhé!',
+      'SECURITY',
+      'Bác Ba (Bảo Vệ Tòa Nhà StartUp Tower)'
+    );
+  }
+
+  // Họp toàn thể công ty (All-Hands Standup Meeting)
+  public callAllHandsMeeting() {
+    soundManager.playStandupBell();
+    this.employees.forEach((emp) => {
+      emp.morale = Math.min(100, (emp.morale ?? 70) + 15);
+      emp.frustration = Math.max(0, (emp.frustration ?? 0) - 15);
+      if (emp.happiness !== undefined) emp.happiness = emp.morale;
+      emp.speechBubble = 'Quyết tâm bám sát mục tiêu sprint!';
+      emp.speechTimer = 5;
+    });
+    this.addFloatingText('🔔 HỌP TOÀN THỂ: +15 Tinh Thần Đội Ngũ!', 380, 180, '#38bdf8');
+    this.decisionLog.push('CEO triệu tập họp toàn thể công ty: Đồng lòng bứt phá tiến độ sprint.');
+    this.notify();
   }
 
   // Chuyển đổi cảnh (Vào/Ra các tòa nhà)
@@ -837,11 +927,11 @@ export class GameStateManager {
     soundManager.playClick();
   }
 
-  // Lấy danh sách thực thể để Renderer vẽ lên Canvas
+  // Lấy danh sách thực thể để Renderer vẽ lên Canvas (Chuẩn 8 Design Sheets)
   public getRenderableEntities(): RenderableEntity[] {
     const list: RenderableEntity[] = [];
 
-    // 1. Người chơi (CEO)
+    // 1. Người chơi (CEO Khởi Nghiệp - Suit Navy, Crown 👑)
     list.push({
       id: 'player',
       name: `${this.playerStats.name} (CEO)`,
@@ -850,10 +940,13 @@ export class GameStateManager {
       direction: this.playerController.dir,
       animationState: this.playerController.state,
       roleType: 'PLAYER',
-      outfitColor: '#0284c7'
+      jobRole: 'CEO',
+      statusIcon: '👑',
+      gender: 'MALE',
+      outfitColor: '#2e3a59'
     });
 
-    // 2. Nhân viên trong văn phòng
+    // 2. Nhân viên trong văn phòng (Chuẩn hóa vai trò & status thought bubble)
     if (this.currentSceneId === 'OFFICE') {
       this.employees.forEach((emp, idx) => {
         const deskPos = this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
@@ -870,6 +963,24 @@ export class GameStateManager {
           }
         }
 
+        let jobRole: 'IT' | 'DESIGNER' | 'SALES' | 'LEAD' | 'ADMIN' = 'IT';
+        let statusIcon = '</>';
+
+        if (emp.role === 'FRONTEND' || emp.role === 'BACKEND' || emp.role === 'FULLSTACK') {
+          jobRole = 'IT';
+          statusIcon = '</>';
+        } else if (emp.role === 'DESIGNER') {
+          jobRole = 'DESIGNER';
+          statusIcon = '🎨';
+        } else if (emp.role === 'PRODUCT_MANAGER') {
+          jobRole = 'LEAD';
+          statusIcon = '👥';
+        } else {
+          // TESTER / ADMIN
+          jobRole = 'ADMIN';
+          statusIcon = '📋';
+        }
+
         list.push({
           id: emp.id,
           name: emp.name,
@@ -878,17 +989,31 @@ export class GameStateManager {
           direction: empDir,
           animationState: emp.currentState,
           roleType: 'EMPLOYEE',
+          jobRole,
+          statusIcon,
           gender: emp.gender,
-          hasGlasses: emp.role === 'BACKEND' || emp.role === 'TESTER',
-          outfitColor: emp.role === 'DESIGNER' ? '#ec4899' : emp.role === 'FRONTEND' ? '#3b82f6' : '#10b981',
+          hasGlasses: emp.role === 'BACKEND' || emp.role === 'TESTER' || jobRole === 'IT',
           speechBubble: emp.speechBubble
         });
       });
     }
 
-    // 2b. Người đi đường & Cư dân đô thị (Khi ở ngoài phố)
+    // 2b. Người đi đường, Bảo vệ tòa nhà & Cư dân đô thị (Khi ở ngoài phố)
     if (this.currentSceneId === 'CITY') {
       list.push(
+        {
+          id: 'npc_security_guard',
+          name: 'Bác Ba (Bảo Vệ)',
+          x: 440,
+          y: 240,
+          direction: 'DOWN',
+          animationState: 'IDLE',
+          roleType: 'CITIZEN',
+          jobRole: 'SECURITY',
+          statusIcon: '🛡️',
+          gender: 'MALE',
+          speechBubble: 'StartUp Tower xin chào quý khách!'
+        },
         {
           id: 'npc_citizen_1',
           name: 'Anh Nam (Dev Freelance)',
@@ -897,6 +1022,7 @@ export class GameStateManager {
           direction: 'RIGHT',
           animationState: 'WORK',
           roleType: 'CITIZEN',
+          jobRole: 'IT',
           outfitColor: '#475569',
           statusIcon: '☕',
           speechBubble: 'StartUp giờ khó gọi vốn quá'
@@ -909,6 +1035,7 @@ export class GameStateManager {
           direction: 'DOWN',
           animationState: 'IDLE',
           roleType: 'CITIZEN',
+          jobRole: 'ADMIN',
           gender: 'FEMALE',
           outfitColor: '#ea580c',
           speechBubble: 'Làm ly trà đá 5 ngàn cháu ơi!'
@@ -921,6 +1048,7 @@ export class GameStateManager {
           direction: 'LEFT',
           animationState: 'WALK',
           roleType: 'CITIZEN',
+          jobRole: 'SALES',
           outfitColor: '#16a34a',
           speechBubble: 'Đơn giao tòa Bitexco'
         }
@@ -937,6 +1065,8 @@ export class GameStateManager {
         direction: 'DOWN',
         animationState: 'HAPPY',
         roleType: 'LAN_ANH',
+        jobRole: 'LAN_ANH',
+        statusIcon: '💖',
         gender: 'FEMALE'
       });
     }
@@ -951,6 +1081,8 @@ export class GameStateManager {
         direction: 'DOWN',
         animationState: 'IDLE',
         roleType: 'FATHER',
+        jobRole: 'FATHER',
+        statusIcon: '🏢',
         gender: 'MALE'
       });
     }

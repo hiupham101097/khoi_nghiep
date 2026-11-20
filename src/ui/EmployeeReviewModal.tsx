@@ -131,6 +131,21 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
 
   const colleagues = gsm.employees.filter((e) => e.id !== employee.id);
 
+  // Ảnh chân dung chuẩn theo 8 Design Sheets
+  const getEmployeePortrait = (emp: EmployeeAIEntity): string => {
+    if (emp.role === 'DESIGNER') return '/characters/designer.jpg';
+    if (emp.role === 'FRONTEND' || emp.role === 'BACKEND' || emp.role === 'FULLSTACK') {
+      return '/characters/it.jpg';
+    }
+    if (emp.role === 'PRODUCT_MANAGER') {
+      return '/characters/lead.jpg';
+    }
+    if (emp.gender === 'FEMALE') {
+      return '/characters/females.jpg';
+    }
+    return '/characters/admin.jpg';
+  };
+
   return (
     <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50 animate-fadeIn select-none">
       <div className="bg-slate-900 border-2 border-sky-500/80 rounded-2xl w-full max-w-2xl max-h-[90vh] shadow-2xl overflow-hidden flex flex-col">
@@ -138,8 +153,15 @@ export const EmployeeReviewModal: React.FC<EmployeeReviewModalProps> = ({ gsm, e
         {/* Header Hồ Sơ */}
         <div className="bg-slate-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-700 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-slate-700 border-2 border-sky-400 flex items-center justify-center text-2xl shrink-0">
-              {employee.gender === 'FEMALE' ? '👩‍💻' : '👨‍💻'}
+            <div className="w-14 h-14 rounded-2xl bg-slate-700 border-2 border-sky-400 overflow-hidden shadow-lg shrink-0">
+              <img
+                src={getEmployeePortrait(employee)}
+                alt={employee.name}
+                className="w-full h-full object-cover object-top scale-110"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
             </div>
             <div>
               <h3 className="font-bold text-slate-100 text-sm sm:text-base flex items-center gap-2 flex-wrap">
