@@ -16,14 +16,17 @@ import { DynamicEventModal } from './ui/DynamicEventModal';
 import { SaveMenuModal } from './ui/SaveMenuModal';
 import { EmployeeReviewModal } from './ui/EmployeeReviewModal';
 import { CollectivePetitionModal } from './ui/CollectivePetitionModal';
+import { DialogModal } from './ui/DialogModal';
 import { VirtualControls } from './ui/VirtualControls';
 import { ENTERPRISE_STAGES } from './engine/economy/CompanyManager';
 import { soundManager } from './engine/core/SoundManager';
+import { InteractiveZone } from './engine/world/WorldData';
 
 export const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rendererRef = useRef<WorldRenderer | null>(null);
   const cameraRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const navigatingZoneRef = useRef<InteractiveZone | null>(null);
   const viewportRef = useRef<{ cssWidth: number; cssHeight: number; dpr: number; zoom: number }>({
     cssWidth: typeof window !== 'undefined' ? window.innerWidth : 1280,
     cssHeight: typeof window !== 'undefined' ? window.innerHeight : 720,
@@ -86,6 +89,20 @@ export const App: React.FC = () => {
 
       // 1. Cập nhật logic game
       gsm.update(deltaTime);
+
+      // Tự động kích hoạt khi người chơi tự hành đến vùng tương tác
+      if (navigatingZoneRef.current) {
+        const targetZone = navigatingZoneRef.current;
+        const closestX = Math.max(targetZone.x, Math.min(gsm.playerController.pos.x, targetZone.x + targetZone.width));
+        const closestY = Math.max(targetZone.y, Math.min(gsm.playerController.pos.y, targetZone.y + targetZone.height));
+        const dist = Math.hypot(gsm.playerController.pos.x - closestX, gsm.playerController.pos.y - closestY);
+        if (dist < 45 || (!gsm.playerController.targetDestination && dist < 85)) {
+          navigatingZoneRef.current = null;
+          gsm.playerController.clearTargetDestination();
+          gsm.handleZoneInteraction(targetZone);
+          soundManager.playClick();
+        }
+      }
 
       // 2. Tính toán Adaptive Zoom & Tọa độ Camera mượt mà
       const cssW = viewportRef.current.cssWidth;
@@ -226,18 +243,21 @@ export const App: React.FC = () => {
       const centerY = clickedZone.y + clickedZone.height / 2;
       const distToPlayer = Math.hypot(gsm.playerController.pos.x - centerX, gsm.playerController.pos.y - centerY);
 
-      if (distToPlayer < 65) {
+      if (distToPlayer < 90) {
+        navigatingZoneRef.current = null;
         gsm.playerController.clearTargetDestination();
         gsm.handleZoneInteraction(clickedZone);
         soundManager.playClick();
         return;
       } else {
+        navigatingZoneRef.current = clickedZone;
         gsm.playerController.setTargetDestination(centerX, centerY);
         return;
       }
     }
 
     // 3. Thiết lập đích đến liên tục (Smooth Continuous Walk)
+    navigatingZoneRef.current = null;
     gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
   };
 
@@ -284,17 +304,20 @@ export const App: React.FC = () => {
         const centerY = clickedZone.y + clickedZone.height / 2;
         const distToPlayer = Math.hypot(gsm.playerController.pos.x - centerX, gsm.playerController.pos.y - centerY);
 
-        if (distToPlayer < 75) {
+        if (distToPlayer < 90) {
+          navigatingZoneRef.current = null;
           gsm.playerController.clearTargetDestination();
           gsm.handleZoneInteraction(clickedZone);
           soundManager.playClick();
           return;
         } else {
+          navigatingZoneRef.current = clickedZone;
           gsm.playerController.setTargetDestination(centerX, centerY);
           return;
         }
       }
 
+      navigatingZoneRef.current = null;
       gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
     }
   };
@@ -410,6 +433,11 @@ export const App: React.FC = () => {
           petition={gsm.activePetition}
           onClose={() => setIsPetitionModalOpen(false)}
         />
+      )}
+
+      {/* 11. Hộp thoại cốt truyện & tương tác nhân vật (RPG Dialog Box) */}
+      {gsm.activeDialog !== null && (
+        <DialogModal gsm={gsm} />
       )}
     </div>
   );

@@ -13,7 +13,8 @@ import {
   EnterpriseStageId,
   SprintStrategy,
   CollectivePetition,
-  FloatingText
+  FloatingText,
+  CharacterDirection
 } from '../../types';
 import { TimeManager } from './TimeManager';
 import { PlayerController } from '../world/PlayerController';
@@ -84,6 +85,12 @@ export class GameStateManager {
   public decisionLog: string[] = [];
 
   // UI Modals state
+  public activeDialog: {
+    title?: string;
+    message: string;
+    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SYSTEM';
+    choices?: { text: string; action: () => void }[];
+  } | null = null;
   public openDashboardTab: 'OVERVIEW' | 'HR' | 'FINANCE' | 'PROJECTS' | 'OFFICE' | 'LEGAL' | null = null;
   public isRecruitModalOpen: boolean = false;
   public isProjectTenderOpen: boolean = false;
@@ -100,6 +107,218 @@ export class GameStateManager {
     this.timeManager = new TimeManager();
     this.playerController = new PlayerController({ x: 380, y: 350 });
     this.setupTimeHandlers();
+    this.initStarterTeamAndProjects();
+  }
+
+  public showDialog(
+    message: string,
+    speaker: 'FATHER' | 'LAN_ANH' | 'EMPLOYEE' | 'BANKER' | 'SYSTEM' = 'SYSTEM',
+    title?: string,
+    choices?: { text: string; action: () => void }[]
+  ) {
+    this.activeDialog = { message, speaker, title, choices };
+    soundManager.playClick();
+    this.notify();
+  }
+
+  public closeDialog() {
+    this.activeDialog = null;
+    this.notify();
+  }
+
+  public initStarterTeamAndProjects() {
+    if (this.employees.length === 0) {
+      const e1: EmployeeAIEntity = {
+        id: 'emp_starter_tuan',
+        name: 'Minh Tuấn',
+        role: 'FRONTEND',
+        gender: 'MALE',
+        age: 23,
+        avatarSeed: 101,
+        level: 'JUNIOR',
+        experienceYears: 2,
+        personality: 'HARDWORKING',
+        speed: 78,
+        quality: 75,
+        bugRate: 5,
+        skillLevels: { frontend: 75, backend: 35, design: 40, testing: 50, devops: 30 },
+        currentSalary: 12000000,
+        salary: 12000000,
+        expectedSalary: 14000000,
+        salaryExpectation: 14000000,
+        health: 95,
+        happiness: 85,
+        morale: 85,
+        energy: 90,
+        stress: 15,
+        resentment: 5,
+        frustration: 5,
+        loyalty: 80,
+        ambition: 65,
+        ceoTrust: 75,
+        trustInCEO: 75,
+        currentState: 'WORK',
+        behaviorState: 'WORKING',
+        currentPos: { x: 150, y: 230 },
+        targetPos: { x: 150, y: 230 },
+        speechBubble: 'Đang code giao diện React Native!',
+        memories: [],
+        memoryLog: [],
+        isProbation: false,
+        probationDaysLeft: 0,
+        isStriking: false,
+        assignedProjectId: 'proj_starter_mvp',
+        deskIndex: 0,
+        hasGivenNotice: false,
+        daysUntilQuit: 0,
+        currentTask: {
+          projectId: 'proj_starter_mvp',
+          taskType: 'CODING',
+          description: 'Lập trình tính năng giỏ hàng & thanh toán',
+          progress: 35,
+          efficiencyMultiplier: 1.0
+        },
+        colleagueRelations: {},
+        relationships: {}
+      };
+
+      const e2: EmployeeAIEntity = {
+        id: 'emp_starter_vy',
+        name: 'Hà Vy',
+        role: 'DESIGNER',
+        gender: 'FEMALE',
+        age: 22,
+        avatarSeed: 102,
+        level: 'JUNIOR',
+        experienceYears: 1,
+        personality: 'CREATIVE',
+        speed: 82,
+        quality: 85,
+        bugRate: 3,
+        skillLevels: { frontend: 30, backend: 15, design: 85, testing: 45, devops: 20 },
+        currentSalary: 11000000,
+        salary: 11000000,
+        expectedSalary: 13000000,
+        salaryExpectation: 13000000,
+        health: 95,
+        happiness: 90,
+        morale: 90,
+        energy: 95,
+        stress: 10,
+        resentment: 0,
+        frustration: 0,
+        loyalty: 85,
+        ambition: 70,
+        ceoTrust: 80,
+        trustInCEO: 80,
+        currentState: 'WORK',
+        behaviorState: 'WORKING',
+        currentPos: { x: 470, y: 230 },
+        targetPos: { x: 470, y: 230 },
+        speechBubble: 'UI Figma mới nhìn mượt lắm sếp ơi ✨',
+        memories: [],
+        memoryLog: [],
+        isProbation: false,
+        probationDaysLeft: 0,
+        isStriking: false,
+        assignedProjectId: 'proj_starter_mvp',
+        deskIndex: 1,
+        hasGivenNotice: false,
+        daysUntilQuit: 0,
+        currentTask: {
+          projectId: 'proj_starter_mvp',
+          taskType: 'UI_DESIGN',
+          description: 'Thiết kế giao diện Dark Mode & Mobile Responsive',
+          progress: 50,
+          efficiencyMultiplier: 1.0
+        },
+        colleagueRelations: {},
+        relationships: {}
+      };
+
+      const e3: EmployeeAIEntity = {
+        id: 'emp_starter_long',
+        name: 'Bảo Long',
+        role: 'BACKEND',
+        gender: 'MALE',
+        age: 25,
+        avatarSeed: 103,
+        level: 'MID',
+        experienceYears: 3,
+        personality: 'AMBITIOUS',
+        speed: 85,
+        quality: 80,
+        bugRate: 4,
+        skillLevels: { frontend: 40, backend: 85, design: 20, testing: 65, devops: 60 },
+        currentSalary: 16000000,
+        salary: 16000000,
+        expectedSalary: 18000000,
+        salaryExpectation: 18000000,
+        health: 90,
+        happiness: 78,
+        morale: 78,
+        energy: 85,
+        stress: 20,
+        resentment: 10,
+        frustration: 10,
+        loyalty: 75,
+        ambition: 85,
+        ceoTrust: 70,
+        trustInCEO: 70,
+        currentState: 'WORK',
+        behaviorState: 'WORKING',
+        currentPos: { x: 270, y: 370 },
+        targetPos: { x: 270, y: 370 },
+        speechBubble: 'API Node.js + PostgreSQL đã xong 🚀',
+        memories: [],
+        memoryLog: [],
+        isProbation: false,
+        probationDaysLeft: 0,
+        isStriking: false,
+        assignedProjectId: 'proj_starter_mvp',
+        deskIndex: 2,
+        hasGivenNotice: false,
+        daysUntilQuit: 0,
+        currentTask: {
+          projectId: 'proj_starter_mvp',
+          taskType: 'CODING',
+          description: 'Tối ưu hóa Database Query & Caching Redis',
+          progress: 30,
+          efficiencyMultiplier: 1.0
+        },
+        colleagueRelations: {},
+        relationships: {}
+      };
+
+      EmployeeAIEngine.initAI2Fields(e1);
+      EmployeeAIEngine.initAI2Fields(e2);
+      EmployeeAIEngine.initAI2Fields(e3);
+      this.employees = [e1, e2, e3];
+    }
+
+    if (this.activeProjects.length === 0) {
+      this.activeProjects = [
+        {
+          id: 'proj_starter_mvp',
+          name: 'Ứng Dụng E-Commerce Shopee Clone',
+          clientName: 'Tập Đoàn Bán Lẻ VinTech',
+          clientType: 'STARTUP',
+          clientLogo: '🛍️',
+          contractValue: 65000000,
+          depositReceived: true,
+          totalWorkUnits: 100,
+          completedWorkUnits: 25,
+          currentBugs: 1,
+          durationDays: 20,
+          daysRemaining: 18,
+          penaltyPerDay: 1500000,
+          qualityRequirement: 70,
+          assignedEmployeeIds: ['emp_starter_tuan', 'emp_starter_vy', 'emp_starter_long'],
+          status: 'IN_PROGRESS',
+          description: 'Xây dựng ứng dụng sàn thương mại điện tử đa nền tảng MVP'
+        }
+      ];
+    }
   }
 
   public subscribe(listener: () => void): () => void {
@@ -458,7 +677,11 @@ export class GameStateManager {
     const bonusPerPerson = 3000000;
     const totalBonus = bonusPerPerson * this.activePetition.signingEmployees.length;
     if (this.playerStats.cash < totalBonus) {
-      alert(`Không đủ tiền mặt để thưởng nóng (Cần tối thiểu ${totalBonus.toLocaleString('vi-VN')} VNĐ)!`);
+      this.showDialog(
+        `Không đủ tiền mặt để thưởng nóng (Cần tối thiểu ${totalBonus.toLocaleString('vi-VN')} VNĐ)!`,
+        'EMPLOYEE',
+        'Đại Diện Nhân Sự'
+      );
       return;
     }
     this.playerStats.cash -= totalBonus;
@@ -571,33 +794,47 @@ export class GameStateManager {
   public chooseIntroOptionC() {
     this.playerStats.cash = 500000000; // Nhận đúng 500 triệu khởi nghiệp!
     this.gamePhase = 'PLAYING';
+    this.isRegistered = true;
+    this.initStarterTeamAndProjects();
     this.switchScene('ROOM', { x: 300, y: 300 }); // Bắt đầu từ phòng trọ
     this.decisionLog.push('Cầm 500 triệu đồng và thách thức Bố Lan Anh: Bắt đầu đế chế khởi nghiệp!');
     soundManager.playSuccess();
+    this.showDialog(
+      'Bạn đã cầm trong tay 500.000.000 VNĐ từ Bố Lan Anh!\n\nNhiệm vụ đầu tiên: Rời phòng trọ ra ngoài đường phố, đến Tòa Nhà StartUp Tower giữa phố để chỉ đạo đội ngũ phát triển sản phẩm công nghệ!',
+      'SYSTEM',
+      'Chiến Dịch Khởi Nghiệp Bắt Đầu'
+    );
     this.notify();
   }
 
   // Hẹn hò cùng Lan Anh
   public dateWithLanAnh() {
     if (this.playerStats.cash < 500000) {
-      alert('Bạn không đủ tiền để mời Lan Anh đi hẹn hò (Cần tối thiểu 500.000đ)!');
+      this.showDialog(
+        'Bạn không đủ tiền để mời Lan Anh đi hẹn hò (Cần tối thiểu 500.000 VNĐ)! Hãy tập trung hoàn thành dự án kiếm thêm thu nhập nhé.',
+        'LAN_ANH',
+        'Hoàng Lan Anh'
+      );
       return;
     }
     this.playerStats.cash -= 500000;
     const { dialogue } = RelationshipManager.goOnDate(this.romance, this.timeManager.day, 500000);
-    alert(dialogue);
+    this.showDialog(dialogue, 'LAN_ANH', 'Hoàng Lan Anh');
+    this.addFloatingText('+20 Yêu Thương ❤️', this.playerController.pos.x, this.playerController.pos.y - 25, '#ec4899');
+    soundManager.playSuccess();
     this.notify();
   }
 
   // Đối thoại với Bố Lan Anh
   public talkWithFather() {
-    let msg = `Ông Hoàng Thế Vinh: "Ta đang theo dõi từng bước đi của cậu. Đừng tưởng cầm 500 triệu là đã thành doanh nhân."`;
+    let msg = `Ông Hoàng Thế Vinh: "Ta đang theo dõi từng bước đi của cậu. Đừng tưởng cầm 500 triệu là đã thành doanh nhân. Nếu thất bại, hãy tự giác rời xa con gái ta mãi mãi!"`;
     if (this.father.evaluation === 'PROUD') {
-      msg = `Ông Hoàng Thế Vinh: "Khá lắm chàng trai! Ta quả không nhìn lầm bản lĩnh của cậu. Hai đứa tính khi nào làm đám cưới?"`;
+      msg = `Ông Hoàng Thế Vinh: "Khá lắm chàng trai! Ta quả không nhìn lầm bản lĩnh của cậu. Hai đứa tính khi nào làm đám cưới? Tập đoàn Vinh Phát sẽ trao tặng 100 tỷ đồng cổ phần làm sính lễ!"`;
     } else if (this.father.evaluation === 'IMPRESSED') {
-      msg = `Ông Hoàng Thế Vinh: "Doanh nghiệp của cậu tăng trưởng khá ấn tượng đấy. Tiếp tục phát huy, đừng để vấp ngã."`;
+      msg = `Ông Hoàng Thế Vinh: "Doanh nghiệp của cậu tăng trưởng khá ấn tượng đấy. Tiếp tục phát huy, đừng để vấp ngã trên thương trường khốc liệt."`;
     }
-    alert(msg);
+    this.showDialog(msg, 'FATHER', 'Ông Hoàng Thế Vinh (Chủ Tịch)');
+    soundManager.playClick();
   }
 
   // Lấy danh sách thực thể để Renderer vẽ lên Canvas
@@ -623,12 +860,22 @@ export class GameStateManager {
         const posX = emp.currentPos ? emp.currentPos.x : deskPos.x;
         const posY = emp.currentPos ? emp.currentPos.y : deskPos.y;
 
+        // Tính toán hướng nhìn chuẩn xác theo chuyển động
+        let empDir: CharacterDirection = 'DOWN';
+        if (emp.targetPos && emp.currentPos) {
+          const dx = emp.targetPos.x - emp.currentPos.x;
+          const dy = emp.targetPos.y - emp.currentPos.y;
+          if (Math.hypot(dx, dy) > 2) {
+            empDir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'RIGHT' : 'LEFT') : (dy > 0 ? 'DOWN' : 'UP');
+          }
+        }
+
         list.push({
           id: emp.id,
           name: emp.name,
           x: posX,
           y: posY,
-          direction: 'DOWN',
+          direction: empDir,
           animationState: emp.currentState,
           roleType: 'EMPLOYEE',
           gender: emp.gender,

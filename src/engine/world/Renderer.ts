@@ -245,29 +245,68 @@ export class WorldRenderer {
       ctx.fillRect(cafeSpotX + 8, cafeSpotY - 12, 12, 10);
 
     } else if (scene.id === 'ROOM') {
-      // Sàn gỗ phòng trọ
-      ctx.fillStyle = '#d97706';
+      // 1. SÀN GỖ PHÒNG TRỌ XƯƠNG CÁ (CHEVRON PARQUET) ẤM ÁP
+      const oakLight = '#d97706';
+      const oakDark = '#b45309';
+      ctx.fillStyle = oakLight;
       ctx.fillRect(0, 0, scene.width, scene.height);
 
-      ctx.strokeStyle = '#b45309';
+      ctx.strokeStyle = 'rgba(69, 26, 3, 0.2)';
       ctx.lineWidth = 1;
-      for (let y = 0; y < scene.height; y += 30) {
+      for (let y = 40; y < scene.height; y += 24) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(scene.width, y); ctx.stroke();
+      }
+
+      // Thảm trải sàn dệt sợi Bohemia ấm cúng giữa phòng
+      const rugX = 220;
+      const rugY = 160;
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.roundRect(rugX, rugY, 180, 140, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Họa tiết dệt thổ cẩm quả trám trên thảm
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1;
+      for (let rx = rugX + 25; rx < rugX + 160; rx += 30) {
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(scene.width, y);
+        ctx.moveTo(rx, rugY + 70);
+        ctx.lineTo(rx + 15, rugY + 45);
+        ctx.lineTo(rx + 30, rugY + 70);
+        ctx.lineTo(rx + 15, rugY + 95);
+        ctx.closePath();
         ctx.stroke();
       }
 
-      // Tường phòng trọ màu vàng nhạt
-      ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(0, 0, scene.width, 40);
+      // 2. TƯỜNG PHÒNG TRỌ VÀNG KEM & VIỀN GỖ SỒI
+      ctx.fillStyle = '#fef9c3';
+      ctx.fillRect(0, 0, scene.width, 38);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(0, 36, scene.width, 4);
 
-      // Poster Steve Jobs / Khởi nghiệp trên tường
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(400, 8, 45, 25);
+      // Poster Steve Jobs "Stay Hungry Stay Foolish" & Anime Wall Art
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(280, 6, 42, 26);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(280, 6, 42, 26);
       ctx.fillStyle = '#38bdf8';
-      ctx.font = '7px sans-serif';
-      ctx.fillText('STARTUP', 404, 22);
+      ctx.font = 'bold 6px sans-serif';
+      ctx.fillText('STEVE JOBS', 282, 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '5px sans-serif';
+      ctx.fillText('THINK BIG', 284, 25);
+
+      // Poster Bảng Kế Hoạch 10 Tỷ VNĐ
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(440, 6, 48, 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 6px sans-serif';
+      ctx.fillText('MỤC TIÊU 2026', 444, 16);
+      ctx.fillStyle = '#fef08a';
+      ctx.fillText('500M ➔ 10 TỶ', 444, 25);
 
     } else if (scene.id === 'OFFICE') {
       // 1. SÀN GỖ PARQUET OAK ẤM ÁP CHUẨN ISOMETRIC (Ảnh tham khảo 1 & 4)
@@ -637,28 +676,85 @@ export class WorldRenderer {
       ctx.fillRect(0, 0, scene.width, 40);
 
     } else if (scene.id === 'CAFE') {
-      // Sàn gỗ phong cách vintage
-      ctx.fillStyle = '#78350f';
+      // Sàn gỗ hạt dẻ ấm áp kiểu quán cà phê phong cách Scandinavia
+      ctx.fillStyle = '#451a03';
       ctx.fillRect(0, 0, scene.width, scene.height);
 
-      // Tường gạch mộc
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(0, 0, scene.width, 40);
-
-      // Đèn thả vàng nghệ thuật
-      for (let x = 120; x < scene.width; x += 150) {
-        ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(x, 30, 8, 0, Math.PI * 2);
-        ctx.fill();
+      // Ghép ván gỗ bóng bẩy
+      ctx.strokeStyle = 'rgba(120, 53, 15, 0.4)';
+      ctx.lineWidth = 1;
+      for (let y = 40; y < scene.height; y += 28) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(scene.width, y); ctx.stroke();
       }
 
-    } else {
-      // Các cảnh công sở khác (Ngân hàng, Tòa án)
-      ctx.fillStyle = '#e2e8f0';
+      // Tường gạch thô đỏ nung cổ điển (Exposed Brick Wall)
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(0, 0, scene.width, 42);
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.lineWidth = 0.8;
+      for (let bx = 0; bx < scene.width; bx += 20) {
+        ctx.strokeRect(bx, 0, 20, 14);
+        ctx.strokeRect(bx + 10, 14, 20, 14);
+        ctx.strokeRect(bx, 28, 20, 14);
+      }
+
+      // Đèn thả Edison tròn phát sáng lung linh treo trần
+      for (let x = 80; x < scene.width; x += 110) {
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 26); ctx.stroke();
+        ctx.fillStyle = '#fef08a';
+        ctx.beginPath(); ctx.arc(x, 28, 6, 0, Math.PI * 2); ctx.fill();
+        const glow = ctx.createRadialGradient(x, 28, 2, x, 28, 25);
+        glow.addColorStop(0, 'rgba(254, 240, 138, 0.4)');
+        glow.addColorStop(1, 'rgba(254, 240, 138, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(x, 28, 25, 0, Math.PI * 2); ctx.fill();
+      }
+
+    } else if (scene.id === 'BANK') {
+      // Sàn đá hoa cương trắng bóng V-Bank với viền đá xanh ngọc lục bảo
+      ctx.fillStyle = '#f1f5f9';
       ctx.fillRect(0, 0, scene.width, scene.height);
+
+      // Gạch lát 60x60 có chỉ viền xám nhạt
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < scene.width; x += 60) {
+        for (let y = 40; y < scene.height; y += 60) {
+          ctx.strokeRect(x, y, 60, 60);
+        }
+      }
+
+      // Dải thảm dẫn đường nhung xanh lá V-Bank từ cửa vào quầy
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(270, 160, 110, 250);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(270, 160, 110, 250);
+
+      // Tường ngân hàng sang trọng màu xanh ngọc đậm
+      ctx.fillStyle = '#064e3b';
+      ctx.fillRect(0, 0, scene.width, 40);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 36, scene.width, 4);
+
+    } else {
+      // Tòa Án Nhân Dân Thành Phố: Sàn gỗ sồi uy nghiêm & Thảm nhung xanh thẩm phán
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(0, 0, scene.width, scene.height);
+      // Thảm nhung xanh thẫm hành lang tòa án
+      ctx.fillStyle = '#1e3a8a';
+      ctx.fillRect(310, 150, 130, 310);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(310, 150, 130, 310);
+
+      // Tường gỗ trang nghiêm
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(0, 0, scene.width, 40);
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(0, 36, scene.width, 4);
     }
   }
 
@@ -666,120 +762,464 @@ export class WorldRenderer {
     const ctx = this.ctx;
 
     if (scene.id === 'CITY') {
+      // 0. BÓNG ĐỔ DÀI CÁC TÒA NHÀ TRÊN MẶT ĐƯỜNG VÀ VỈA HÈ
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.18)';
+      // Bóng dãy tòa nhà phía Bắc
+      ctx.beginPath();
+      ctx.moveTo(100, 220); ctx.lineTo(320, 220); ctx.lineTo(340, 245); ctx.lineTo(120, 245); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(380, 240); ctx.lineTo(660, 240); ctx.lineTo(685, 265); ctx.lineTo(405, 265); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(740, 260); ctx.lineTo(1120, 260); ctx.lineTo(1145, 285); ctx.lineTo(765, 285); ctx.fill();
+
       // 1. Dãy Nhà Trọ Sinh Viên (Phía Tây Bắc)
+      const roomBldX = 100;
+      const roomBldY = 40;
+      const roomBldW = 220;
+      const roomBldH = 180;
+      // Khối nhà tường vàng cam nhạt kiểu nhà phố Việt Nam
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(roomBldX, roomBldY, roomBldW, roomBldH);
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(roomBldX, roomBldY, roomBldW, roomBldH);
+
+      // Mái hiên tôn đỏ gạch
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(roomBldX - 8, roomBldY - 10, roomBldW + 16, 20);
+      ctx.fillStyle = '#dc2626';
+      for (let mx = roomBldX - 6; mx < roomBldX + roomBldW + 12; mx += 14) {
+        ctx.fillRect(mx, roomBldY - 10, 2, 20);
+      }
+
+      // Ban công tầng 2 có cục nóng điều hòa & giàn phơi
       ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(100, 40, 220, 180);
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(90, 30, 240, 25); // Mái hiên
-      ctx.fillStyle = '#78350f';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('NHÀ TRỌ SINH VIÊN (HẺM 42)', 115, 75);
-
-      // Cửa vào phòng trọ
-      ctx.fillStyle = '#451a03';
-      ctx.fillRect(180, 180, 60, 40);
-
-      // 2. Tòa Tháp StartUp Tower (Trung Tâm Bắc)
-      ctx.fillStyle = '#1e3a8a';
-      ctx.fillRect(380, 40, 280, 200);
-      // Biển hiệu LED sáng đèn
-      ctx.fillStyle = timePeriod === 'NIGHT' ? '#38bdf8' : '#0284c7';
-      ctx.fillRect(400, 50, 240, 35);
+      ctx.fillRect(roomBldX + 15, roomBldY + 50, 190, 42);
+      ctx.strokeStyle = '#b45309';
+      ctx.strokeRect(roomBldX + 15, roomBldY + 50, 190, 42);
+      // Lan can ban công sắt
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1;
+      for (let l = roomBldX + 20; l < roomBldX + 200; l += 10) {
+        ctx.beginPath(); ctx.moveTo(l, roomBldY + 68); ctx.lineTo(l, roomBldY + 92); ctx.stroke();
+      }
+      // Cục nóng điều hòa
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px sans-serif';
-      ctx.fillText('🏢 STARTUP TOWER (IT HUB)', 425, 73);
+      ctx.fillRect(roomBldX + 25, roomBldY + 56, 22, 14);
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath(); ctx.arc(roomBldX + 36, roomBldY + 63, 4, 0, Math.PI * 2); ctx.fill();
 
-      // Các ô cửa kính văn phòng phản chiếu ánh sáng
-      ctx.fillStyle = timePeriod === 'NIGHT' ? '#fef08a' : '#93c5fd';
-      for (let r = 0; r < 2; r++) {
-        for (let c = 0; c < 5; c++) {
-          ctx.fillRect(400 + c * 48, 100 + r * 40, 36, 26);
+      // Biển hiệu Nhà Trọ
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(roomBldX + 30, roomBldY + 18, 160, 22);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('🏠 KHU TRỌ SINH VIÊN (HẺM 42)', roomBldX + 36, roomBldY + 33);
+
+      // Cửa cuốn / Cửa gỗ ra vào phòng trọ tầng 1
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(170, 175, 80, 45);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(170, 175, 80, 45);
+      ctx.fillStyle = '#22c55e';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('LỐI VÀO PHÒNG TRỌ', 174, 202);
+
+      // 2. Tòa Tháp Cao Ốc StartUp Tower (Trung Tâm Bắc - Hiện Đại)
+      const towerX = 380;
+      const towerY = 40;
+      const towerW = 280;
+      const towerH = 200;
+      // Thân tòa nhà kính cường lực xanh dương hiện đại
+      const towerGrad = ctx.createLinearGradient(towerX, towerY, towerX + towerW, towerY + towerH);
+      towerGrad.addColorStop(0, '#1e3a8a');
+      towerGrad.addColorStop(0.5, '#1e40af');
+      towerGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = towerGrad;
+      ctx.fillRect(towerX, towerY, towerW, towerH);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(towerX, towerY, towerW, towerH);
+
+      // Chóp tháp ăng-ten phát sóng có đèn đỏ nhấp nháy
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(towerX + towerW / 2, towerY);
+      ctx.lineTo(towerX + towerW / 2, towerY - 25);
+      ctx.stroke();
+      const beaconOn = Math.sin(tick * 5) > 0;
+      ctx.fillStyle = beaconOn ? '#ef4444' : '#7f1d1d';
+      ctx.beginPath();
+      ctx.arc(towerX + towerW / 2, towerY - 26, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Biển hiệu 3D Neon Marquee "STARTUP TOWER"
+      const neonColor = timePeriod === 'NIGHT' ? '#38bdf8' : '#0284c7';
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(towerX + 20, towerY + 12, towerW - 40, 32);
+      ctx.strokeStyle = neonColor;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(towerX + 20, towerY + 12, towerW - 40, 32);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏢 STARTUP TOWER (IT HUB)', towerX + towerW / 2, towerY + 33);
+      ctx.textAlign = 'left';
+
+      // Các ô cửa sổ kính văn phòng có đèn bật sáng
+      for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 6; col++) {
+          const winBoxX = towerX + 20 + col * 40;
+          const winBoxY = towerY + 54 + row * 40;
+          const isLit = (col + row * 2 + Math.floor(tick * 0.2)) % 3 !== 0;
+          ctx.fillStyle = isLit ? '#fef08a' : '#60a5fa';
+          ctx.fillRect(winBoxX, winBoxY, 32, 26);
+          // Rèm hoặc vách ngăn bên trong
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.4)';
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(winBoxX, winBoxY, 32, 26);
         }
       }
-      // Cửa kính xoay
-      ctx.fillStyle = '#60a5fa';
-      ctx.fillRect(480, 195, 80, 45);
 
-      // 3. Biệt Thự Gia Đình Họ Hoàng (Đông Bắc)
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(740, 40, 380, 220);
-      ctx.fillStyle = '#991b1b';
-      ctx.fillRect(730, 30, 400, 25); // Mái ngói đỏ son
-      ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('🏰 DINH THỰ VINH PHÁT GROUP', 790, 75);
-      // Cổng mạ vàng
+      // Sảnh cửa xoay tự động bằng kính
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.5)';
+      ctx.fillRect(470, 185, 100, 55);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(470, 185, 100, 55);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('CỬA VÀO VĂN PHÒNG', 476, 215);
+
+      // 3. Dinh Thự Hoàng Gia Vinh Phát Group (Đông Bắc - Tân Cổ Điển)
+      const villaX = 740;
+      const villaY = 40;
+      const villaW = 380;
+      const villaH = 220;
+      // Khối biệt thự đá trắng cẩm thạch
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(villaX, villaY, villaW, villaH);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(villaX, villaY, villaW, villaH);
+
+      // Mái ngói vòm Mansard màu đỏ đô hoàng gia
+      ctx.fillStyle = '#881337';
+      ctx.fillRect(villaX - 10, villaY - 14, villaW + 20, 26);
+      ctx.fillStyle = '#be123c';
+      ctx.fillRect(villaX + 40, villaY - 26, 120, 14); // Tháp vòm phụ
+
+      // Hàng cột trụ Hy Lạp Corinthian màu trắng ngà
+      for (let col = 0; col < 6; col++) {
+        const pillarX = villaX + 30 + col * 60;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(pillarX, villaY + 20, 14, 150);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(pillarX, villaY + 20, 14, 150);
+      }
+
+      // Bảng tên mạ vàng dinh thự
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(villaX + 60, villaY + 25, villaW - 120, 26);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(villaX + 60, villaY + 25, villaW - 120, 26);
+      ctx.fillStyle = '#fbbf24';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('🏰 DINH THỰ VINH PHÁT GROUP', villaX + villaW / 2, villaY + 42);
+      ctx.textAlign = 'left';
+
+      // Cổng nhôm đúc mạ vàng tráng lệ
       ctx.fillStyle = '#d97706';
-      ctx.fillRect(880, 200, 80, 60);
+      ctx.fillRect(870, 195, 100, 65);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(870, 195, 100, 65);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('CỔNG VÀO BIỆT THỰ', 878, 230);
 
       // 4. Quán Cà Phê StartUp Hub (Tây Nam)
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(80, 520, 220, 200);
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(90, 530, 200, 30);
-      ctx.fillStyle = '#1e293b';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('☕ STARTUP CAFE & HUB', 115, 550);
-      // Cửa quán
+      const cafeBldX = 80;
+      const cafeBldY = 520;
+      const cafeBldW = 220;
+      const cafeBldH = 200;
+      // Khối tường gạch đỏ cổ điển kiểu cà phê hipster
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(cafeBldX, cafeBldY, cafeBldW, cafeBldH);
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cafeBldX, cafeBldY, cafeBldW, cafeBldH);
+
+      // Mái che bạt sọc cam-trắng (Awning)
+      for (let s = 0; s < 11; s++) {
+        ctx.fillStyle = s % 2 === 0 ? '#ea580c' : '#ffffff';
+        ctx.fillRect(cafeBldX + s * 20, cafeBldY - 10, 20, 18);
+      }
+
+      // Biển hiệu gỗ quán cà phê
       ctx.fillStyle = '#451a03';
-      ctx.fillRect(160, 520, 70, 35);
+      ctx.fillRect(cafeBldX + 15, cafeBldY + 16, cafeBldW - 30, 28);
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(cafeBldX + 15, cafeBldY + 16, cafeBldW - 30, 28);
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('☕ STARTUP CAFE & CO-WORKING', cafeBldX + 22, cafeBldY + 34);
+
+      // Cửa kính lớn nhìn thấy bên trong ấm cúng
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(150, 490, 90, 45);
+      ctx.strokeStyle = '#7c2d12';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(150, 490, 90, 45);
+      ctx.fillStyle = '#7c2d12';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('LỐI VÀO CAFE', 165, 515);
 
       // 5. Ngân Hàng V-Bank (Nam Trung Tâm)
-      ctx.fillStyle = '#065f46';
-      ctx.fillRect(360, 520, 220, 200);
-      ctx.fillStyle = '#10b981';
-      ctx.fillRect(370, 530, 200, 30);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('🏦 V-BANK (TÍN DỤNG)', 400, 550);
+      const bankBldX = 360;
+      const bankBldY = 520;
+      const bankBldW = 220;
+      const bankBldH = 200;
+      ctx.fillStyle = '#064e3b';
+      ctx.fillRect(bankBldX, bankBldY, bankBldW, bankBldH);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(bankBldX, bankBldY, bankBldW, bankBldH);
+
+      // Biển hiệu ngân hàng V-Bank
       ctx.fillStyle = '#047857';
-      ctx.fillRect(440, 520, 70, 35);
+      ctx.fillRect(bankBldX + 15, bankBldY + 16, bankBldW - 30, 30);
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(bankBldX + 15, bankBldY + 16, bankBldW - 30, 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('🏦 V-BANK (TÍN DỤNG)', bankBldX + 32, bankBldY + 36);
 
-      // 6. Chi Cục Thuế & ĐKKD (Nam Đông)
+      // Cửa vào ngân hàng
+      ctx.fillStyle = 'rgba(52, 211, 153, 0.35)';
+      ctx.fillRect(430, 490, 90, 45);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(430, 490, 90, 45);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('CỬA V-BANK', 448, 515);
+
+      // 6. Chi Cục Thuế & Đăng Ký Doanh Nghiệp (Nam Đông)
+      const taxBldX = 640;
+      const taxBldY = 520;
+      const taxBldW = 220;
+      const taxBldH = 200;
       ctx.fillStyle = '#831843';
-      ctx.fillRect(640, 520, 220, 200);
-      ctx.fillStyle = '#db2777';
-      ctx.fillRect(650, 530, 200, 30);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('🏛️ CHI CỤC THUẾ & ĐKKD', 675, 550);
-      ctx.fillStyle = '#9d174d';
-      ctx.fillRect(720, 520, 70, 35);
+      ctx.fillRect(taxBldX, taxBldY, taxBldW, taxBldH);
+      ctx.strokeStyle = '#db2777';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(taxBldX, taxBldY, taxBldW, taxBldH);
 
-      // 7. Tòa Án Nhân Dân Thành Phố (Góc Đông Nam)
-      ctx.fillStyle = '#374151';
-      ctx.fillRect(920, 500, 240, 220);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(930, 510, 220, 30);
+      ctx.fillStyle = '#9d174d';
+      ctx.fillRect(taxBldX + 10, taxBldY + 16, taxBldW - 20, 30);
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.fillText('⚖️ TÒA ÁN NHÂN DÂN', 975, 530);
-      ctx.fillStyle = '#1f2937';
-      ctx.fillRect(1000, 500, 80, 35);
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('🏛️ CHI CỤC THUẾ & ĐKKD', taxBldX + 22, taxBldY + 35);
+
+      ctx.fillStyle = '#be185d';
+      ctx.fillRect(710, 490, 90, 45);
+      ctx.strokeStyle = '#f472b6';
+      ctx.strokeRect(710, 490, 90, 45);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('LỐI VÀO ĐKKD', 724, 515);
+
+      // 7. Tòa Án Nhân Dân Thành Phố (Đông Nam)
+      const courtBldX = 920;
+      const courtBldY = 500;
+      const courtBldW = 240;
+      const courtBldH = 220;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(courtBldX, courtBldY, courtBldW, courtBldH);
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(courtBldX, courtBldY, courtBldW, courtBldH);
+
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(courtBldX + 15, courtBldY + 16, courtBldW - 30, 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('⚖️ TÒA ÁN NHÂN DÂN', courtBldX + 35, courtBldY + 36);
+
+      ctx.fillStyle = '#374151';
+      ctx.fillRect(990, 470, 100, 45);
+      ctx.strokeStyle = '#ef4444';
+      ctx.strokeRect(990, 470, 100, 45);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('CỔNG TÒA ÁN', 1012, 495);
+
+      // 8. XE HƠI & PHƯƠNG TIỆN GIAO THÔNG CHẠY TRÊN ĐƯỜNG PHỐ (Thêm Sức Sống)
+      // Xe Taxi Vàng chạy trên làn đường
+      const taxiX = ((tick * 65 + 100) % (scene.width + 100)) - 50;
+      const taxiY = 320;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(taxiX + 24, taxiY + 22, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#eab308';
+      ctx.beginPath(); ctx.roundRect(taxiX, taxiY, 48, 22, 4); ctx.fill();
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(taxiX + 10, taxiY + 3, 28, 10); // Kính xe
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(taxiX + 18, taxiY - 5, 12, 5); // Đèn taxi
+      // Bánh xe
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(taxiX + 6, taxiY + 18, 10, 6);
+      ctx.fillRect(taxiX + 32, taxiY + 18, 10, 6);
+
+      // Xe Hơi Trắng chạy ngược chiều phía dưới
+      const car2X = scene.width - (((tick * 50 + 200) % (scene.width + 120)) - 60);
+      const car2Y = 410;
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath(); ctx.ellipse(car2X + 24, car2Y + 22, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath(); ctx.roundRect(car2X, car2Y, 50, 22, 4); ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.strokeRect(car2X, car2Y, 50, 22);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(car2X + 12, car2Y + 3, 26, 10);
 
     } else if (scene.id === 'ROOM') {
-      // Giường ngủ
-      ctx.fillStyle = '#3b82f6';
-      ctx.fillRect(60, 60, 140, 180);
-      // Gối trắng
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(75, 75, 110, 35);
-
-      // Bàn học & làm việc gỗ ép
-      ctx.fillStyle = '#92400e';
-      ctx.fillRect(360, 60, 160, 90);
-
-      // Laptop đang mở màn hình phát sáng
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(410, 80, 45, 30);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(412, 82, 41, 24);
-
-      // Quạt máy đứng
-      ctx.fillStyle = '#0284c7';
+      // 1. GIƯỜNG NGỦ SINH VIÊN ẤM CÚNG (Góc Tây Bắc)
+      const bedX = 60;
+      const bedY = 60;
+      // Khung giường gỗ thông
+      ctx.fillStyle = '#78350f';
       ctx.beginPath();
-      ctx.arc(80, 300, 18, 0, Math.PI * 2);
+      ctx.roundRect(bedX, bedY, 140, 180, 4);
       ctx.fill();
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Đệm ga trải giường màu xanh navy có họa tiết caro
+      ctx.fillStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.roundRect(bedX + 8, bedY + 8, 124, 164, 4);
+      ctx.fill();
+
+      // Chăn bông gấp nếp màu cam ấm
+      ctx.fillStyle = '#ea580c';
+      ctx.beginPath();
+      ctx.roundRect(bedX + 8, bedY + 70, 124, 102, [0, 0, 4, 4]);
+      ctx.fill();
+
+      // 2 Chiếc gối trắng êm ái
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(bedX + 18, bedY + 16, 48, 28, 4);
+      ctx.roundRect(bedX + 74, bedY + 16, 48, 28, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 2. BÀN LÀM VIỆC & GÓC CODING STARTUP (Góc Đông Bắc)
+      const deskX = 360;
+      const deskY = 60;
+      // Bàn gỗ ép công nghiệp
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.roundRect(deskX, deskY, 160, 90, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Laptop đang mở màn hình hiển thị mã nguồn code (VS Code syntax)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(deskX + 45, deskY + 18, 56, 36);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(deskX + 47, deskY + 20, 52, 32);
+      // Các dòng code nhiều màu sắc
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(deskX + 51, deskY + 24, 20, 2);
+      ctx.fillStyle = '#f472b6'; ctx.fillRect(deskX + 51, deskY + 29, 32, 2);
+      ctx.fillStyle = '#4ade80'; ctx.fillRect(deskX + 56, deskY + 34, 24, 2);
+      ctx.fillStyle = '#facc15'; ctx.fillRect(deskX + 51, deskY + 39, 16, 2);
+
+      // Đèn bàn học tỏa nón sáng vàng ấm
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.arc(deskX + 125, deskY + 25, 8, 0, Math.PI * 2);
+      ctx.fill();
+      const lampGlow = ctx.createRadialGradient(deskX + 125, deskY + 25, 2, deskX + 125, deskY + 25, 45);
+      lampGlow.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+      lampGlow.addColorStop(1, 'rgba(254, 240, 138, 0)');
+      ctx.fillStyle = lampGlow;
+      ctx.beginPath();
+      ctx.arc(deskX + 125, deskY + 25, 45, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Chồng sách lập trình (Clean Code, Design Patterns, Khởi nghiệp 0 đến 1)
+      ctx.fillStyle = '#1e3a8a'; ctx.fillRect(deskX + 18, deskY + 20, 18, 6);
+      ctx.fillStyle = '#dc2626'; ctx.fillRect(deskX + 18, deskY + 28, 20, 7);
+      ctx.fillStyle = '#15803d'; ctx.fillRect(deskX + 18, deskY + 37, 22, 8);
+
+      // Ly mì tôm / Cốc cà phê sinh viên
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(deskX + 120, deskY + 55, 12, 15);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 7px sans-serif';
+      ctx.fillText('☕', deskX + 122, deskY + 66);
+
+      // 3. TỦ QUẦN ÁO & QUẠT MÁY ĐỨNG (Góc Tây Nam)
+      const wardX = 60;
+      const wardY = 260;
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.roundRect(wardX, wardY, 90, 120, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#271005';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Tay nắm tủ
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(wardX + 42, wardY + 55, 2, 10);
+      ctx.fillRect(wardX + 46, wardY + 55, 2, 10);
+
+      // Đàn Guitar acoustic tựa góc tường bên cạnh tủ
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.ellipse(wardX + 115, wardY + 80, 14, 20, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#78350f';
+      ctx.stroke();
+      // Cần đàn
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(wardX + 112, wardY + 25, 5, 40);
+
+      // Quạt điện đứng có cánh quạt xoay
+      const fanX = 175;
+      const fanY = 280;
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(fanX - 2, fanY, 4, 35);
+      ctx.beginPath();
+      ctx.arc(fanX, fanY, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#bae6fd';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Cánh quạt quay
+      const fanAngle = tick * 18;
+      ctx.strokeStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(fanX, fanY);
+      ctx.lineTo(fanX + Math.cos(fanAngle) * 11, fanY + Math.sin(fanAngle) * 11);
+      ctx.moveTo(fanX, fanY);
+      ctx.lineTo(fanX + Math.cos(fanAngle + Math.PI) * 11, fanY + Math.sin(fanAngle + Math.PI) * 11);
+      ctx.stroke();
 
     } else if (scene.id === 'OFFICE') {
       // 1. KỆ SÁCH GỖ TỐI & TỦ TÀI LIỆU CÔNG CHỨNG (Ảnh tham khảo 1 & 4)
@@ -1616,45 +2056,500 @@ export class WorldRenderer {
       ctx.fillText('🚪 LỐI RA KHU LÀM VIỆC CHÍNH', doorX + 10, doorY + 19);
 
     } else if (scene.id === 'VILLA') {
-      // Bàn trà cẩm thạch
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(300, 150, 200, 100);
-      ctx.strokeStyle = '#d97706';
+      // 1. ĐÀN ĐẠI DƯƠNG CẦM (GRAND PIANO - Góc Trái)
+      const pianoX = 80;
+      const pianoY = 70;
+      // Bóng đổ
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.beginPath();
+      ctx.ellipse(pianoX + 70, pianoY + 115, 65, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thân đàn sơn mài đen bóng sang trọng
+      ctx.fillStyle = '#09090b';
+      ctx.beginPath();
+      ctx.roundRect(pianoX, pianoY, 135, 105, [25, 60, 8, 8]);
+      ctx.fill();
+      ctx.strokeStyle = '#27272a';
       ctx.lineWidth = 2;
-      ctx.strokeRect(300, 150, 200, 100);
+      ctx.stroke();
 
-      // Vali 500 Triệu Đồng Đặt Trên Bàn (Tâm điểm cốt truyện)
+      // Nắp đàn mở hé để lộ dây đàn mạ vàng
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(pianoX + 18, pianoY + 18, 90, 60);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 0.8;
+      for (let s = 0; s < 10; s++) {
+        ctx.beginPath();
+        ctx.moveTo(pianoX + 22 + s * 8, pianoY + 20);
+        ctx.lineTo(pianoX + 35 + s * 7, pianoY + 75);
+        ctx.stroke();
+      }
+
+      // Phím đàn trắng đen
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(pianoX + 15, pianoY + 82, 105, 18);
+      ctx.fillStyle = '#0f172a';
+      for (let k = 0; k < 12; k++) {
+        ctx.fillRect(pianoX + 20 + k * 8, pianoY + 82, 5, 11);
+      }
+      // Ghế ngồi chơi piano đệm da nhung đỏ
+      ctx.fillStyle = '#881337';
+      ctx.beginPath();
+      ctx.roundRect(pianoX + 45, pianoY + 105, 45, 18, 3);
+      ctx.fill();
+
+      // 2. BÀN TRÀ CẨM THẠCH & TÂM ĐIỂM VALI 500 TRIỆU ĐỒNG
+      const tableX = 300;
+      const tableY = 150;
+      // Bóng bàn
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.beginPath();
+      ctx.roundRect(tableX - 5, tableY + 5, 210, 100, 10);
+      ctx.fill();
+
+      // Bàn đá cẩm thạch trắng viền vàng kim
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.roundRect(tableX, tableY, 200, 95, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Vầng hào quang ánh sáng chiếu rọi vào Vali 500 triệu (Spotlight Beam)
+      const spotGrad = ctx.createRadialGradient(tableX + 100, tableY + 45, 5, tableX + 100, tableY + 45, 75);
+      spotGrad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+      spotGrad.addColorStop(0.5, 'rgba(251, 191, 36, 0.15)');
+      spotGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+      ctx.fillStyle = spotGrad;
+      ctx.beginPath();
+      ctx.arc(tableX + 100, tableY + 45, 75, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Chiếc Vali Da Thượng Hạng Mở Hé Nắp Đựng 500 Triệu Đồng (Ảnh cốt truyện chính)
+      const caseX = tableX + 55;
+      const caseY = tableY + 22;
+      // Thân vali da cá sấu nâu sẫm
       ctx.fillStyle = '#451a03';
-      ctx.fillRect(360, 180, 80, 45);
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(390, 195, 20, 12);
-      ctx.fillStyle = '#22c55e';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.fillText('500.000.000đ', 370, 215);
+      ctx.beginPath();
+      ctx.roundRect(caseX, caseY, 90, 52, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
 
-      // Ghế bành chủ tịch bọc da
-      ctx.fillStyle = '#831843';
-      ctx.fillRect(350, 90, 100, 50);
+      // Khóa số kim loại mạ vàng
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(caseX + 18, caseY + 22, 10, 8);
+      ctx.fillRect(caseX + 62, caseY + 22, 10, 8);
+      // Tay cầm vali
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(caseX + 45, caseY + 52, 10, 0, Math.PI);
+      ctx.stroke();
+
+      // Các cọc tiền polymer 500.000 VNĐ xanh ngọc bích xếp tầng bên trong
+      const cashPulse = 0.8 + Math.sin(tick * 5) * 0.2;
+      ctx.fillStyle = `rgba(16, 185, 129, ${cashPulse})`;
+      for (let b = 0; b < 3; b++) {
+        ctx.fillRect(caseX + 14 + b * 22, caseY + 6, 20, 14);
+        ctx.strokeStyle = '#059669';
+        ctx.lineWidth = 0.8;
+        ctx.strokeRect(caseX + 14 + b * 22, caseY + 6, 20, 14);
+        // Dải ruy băng ngân hàng niêm phong đỏ
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(caseX + 22 + b * 22, caseY + 6, 4, 14);
+        ctx.fillStyle = `rgba(16, 185, 129, ${cashPulse})`;
+      }
+
+      // Nhãn số tiền phát sáng
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(caseX + 6, caseY + 36, 78, 12);
+      ctx.fillStyle = '#34d399';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('500.000.000 VNĐ', caseX + 45, caseY + 45);
+      ctx.textAlign = 'left';
+
+      // Bộ ấm trà gốm sứ mạ vàng Hoàng gia bên cạnh
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(tableX + 25, tableY + 35, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      // Khói trà bốc lên ấm áp
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.beginPath();
+      ctx.moveTo(tableX + 25, tableY + 22);
+      ctx.lineTo(tableX + 28, tableY + 12);
+      ctx.stroke();
+
+      // Ghế bành chủ tịch ông Hoàng Thế Vinh (Da bò tót màu rượu vang đỏ)
+      ctx.fillStyle = '#881337';
+      ctx.beginPath();
+      ctx.roundRect(tableX + 40, tableY - 65, 120, 55, [12, 12, 4, 4]);
+      ctx.fill();
+      ctx.strokeStyle = '#4c0519';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Nút múi da quả trám
+      ctx.fillStyle = '#fbbf24';
+      for (let btn = 0; btn < 4; btn++) {
+        ctx.beginPath();
+        ctx.arc(tableX + 55 + btn * 28, tableY - 35, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. TỦ RƯỢU VANG PHÁP & CỔ VẬT HOÀNG GIA (Góc Phải)
+      const wineX = 580;
+      const wineY = 60;
+      ctx.fillStyle = '#271005';
+      ctx.beginPath();
+      ctx.roundRect(wineX, wineY, 150, 110, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Đèn LED chiếu ấm các ngăn rượu
+      for (let tier = 0; tier < 3; tier++) {
+        const tY = wineY + 10 + tier * 32;
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
+        ctx.fillRect(wineX + 6, tY, 138, 26);
+        ctx.fillStyle = '#451a03';
+        ctx.fillRect(wineX + 6, tY + 26, 138, 3);
+        // Hàng chai rượu vang thủy tinh sang trọng
+        const wineColors = ['#7f1d1d', '#1e3a8a', '#14532d', '#581c87', '#991b1b'];
+        for (let bot = 0; bot < 7; bot++) {
+          ctx.fillStyle = wineColors[(tier * 3 + bot) % wineColors.length];
+          ctx.fillRect(wineX + 14 + bot * 18, tY + 6, 7, 19);
+          // Cổ chai
+          ctx.fillRect(wineX + 16 + bot * 18, tY + 2, 3, 5);
+        }
+      }
+
+    } else if (scene.id === 'CAFE') {
+      // 1. QUẦY BAR PHA CHẾ & THIẾT BỊ CAFE CHUYÊN NGHIỆP
+      const barX = 60;
+      const barY = 60;
+      const barW = 220;
+      const barH = 90;
+      // Bóng đổ
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(barX, barY + barH, barW, 8);
+
+      // Thân quầy gỗ sồi sậm nẹp chỉ đen
+      ctx.fillStyle = '#3b1c09';
+      ctx.fillRect(barX, barY, barW, barH);
+      // Mặt đá cẩm thạch trắng Calacatta phía trên
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(barX - 4, barY - 4, barW + 8, 14);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(barX - 4, barY - 4, barW + 8, 14);
+
+      // Máy pha cà phê Espresso công nghiệp La Marzocco màu đỏ tươi
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.roundRect(barX + 25, barY - 32, 48, 28, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#991b1b';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Áp kế & Cần gạt kim loại
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(barX + 30, barY - 26, 8, 8);
+      ctx.fillRect(barX + 50, barY - 26, 16, 5);
+      // Hơi nước bốc lên từ vòi đánh sữa
+      const steamAnim = Math.sin(tick * 6) * 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(barX + 62, barY - 34);
+      ctx.quadraticCurveTo(barX + 66 + steamAnim, barY - 44, barX + 60, barY - 52);
+      ctx.stroke();
+
+      // Máy xay hạt cà phê cà-phê phễu tròn trong suốt
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(barX + 85, barY - 22, 16, 18);
+      ctx.fillStyle = 'rgba(120, 53, 15, 0.8)';
+      ctx.beginPath();
+      ctx.arc(barX + 93, barY - 26, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tủ kính trưng bày bánh ngọt Pháp (Pastry Glass Case)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.beginPath();
+      ctx.roundRect(barX + 115, barY - 28, 75, 24, 3);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // Bánh sừng bò croissant vàng óng & matcha cake bên trong
+      ctx.fillStyle = '#d97706';
+      ctx.beginPath();
+      ctx.ellipse(barX + 132, barY - 14, 8, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(barX + 152, barY - 14, 8, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(barX + 168, barY - 18, 12, 10);
+
+      // Bảng Menu phấn đen treo tường phía sau
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(barX + 15, barY - 58, 190, 24);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(barX + 15, barY - 58, 190, 24);
+      ctx.fillStyle = '#fef08a';
+      ctx.font = 'bold 8px monospace';
+      ctx.fillText('☕ ESPRESSO 35k | COLD BREW 45k | CROISSANT 30k', barX + 22, barY - 42);
+
+      // 2. BÀN HẸN HÒ CỦA LAN ANH (Bàn Gặp Gỡ Cảm Xúc)
+      const dateX = 440;
+      const dateY = 100;
+      // Thảm nỉ tròn dưới bàn hẹn hò
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.ellipse(dateX + 70, dateY + 40, 75, 45, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#f472b6';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Bàn tròn mặt đá hoa cương hồng phấn viền đồng
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(dateX + 70, dateY + 35, 42, 26, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Hai tách cà phê Cappuccino có vẽ hình trái tim (Latte Art)
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(dateX + 56, dateY + 32, 6, 0, Math.PI * 2);
+      ctx.arc(dateX + 84, dateY + 32, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#78350f';
+      ctx.beginPath();
+      ctx.arc(dateX + 56, dateY + 32, 4.5, 0, Math.PI * 2);
+      ctx.arc(dateX + 84, dateY + 32, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      // Trái tim latte art
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '7px sans-serif';
+      ctx.fillText('❤', dateX + 53, dateY + 35);
+      ctx.fillText('❤', dateX + 81, dateY + 35);
+
+      // Lọ hoa tulip hồng ngọt ngào giữa bàn
+      ctx.fillStyle = '#ec4899';
+      ctx.beginPath();
+      ctx.arc(dateX + 70, dateY + 25, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2 Ghế tựa bọc nệm Scandinavian dễ thương hai bên
+      ctx.fillStyle = '#fda4af';
+      ctx.beginPath();
+      ctx.roundRect(dateX + 15, dateY + 22, 22, 28, 4);
+      ctx.roundRect(dateX + 102, dateY + 22, 22, 28, 4);
+      ctx.fill();
+
+      // 3. BÀN THẢO LUẬN NHÓM & GIAO LƯU LẬP TRÌNH VIÊN
+      const techX = 180;
+      const techY = 260;
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.roundRect(techX, techY, 180, 85, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Laptop đang mở màn hình phát sáng & Cốc cà phê mang đi
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(techX + 25, techY + 20, 36, 22);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(techX + 27, techY + 22, 32, 18);
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(techX + 115, techY + 20, 36, 22);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(techX + 117, techY + 22, 32, 18);
+
+      // Cốc giấy take-away
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(techX + 75, techY + 26, 8, 12);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(techX + 75, techY + 30, 8, 4);
+
+      // 4. BÀN LÀM VIỆC TỰ DO (FREELANCE POD - Bên Phải)
+      const freeX = 460;
+      const freeY = 260;
+      ctx.fillStyle = '#451a03';
+      ctx.beginPath();
+      ctx.roundRect(freeX, freeY, 160, 85, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#92400e';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Màn hình hiển thị mã nguồn code
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(freeX + 45, freeY + 16, 42, 26);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(freeX + 47, freeY + 18, 38, 22);
+
+      // 5. CÂY CẢNH NỘI THẤT (Monstera trầu bà lá xẻ trong chậu sứ)
+      [ { x: 30, y: 440 }, { x: 630, y: 70 }, { x: 630, y: 440 } ].forEach((pos) => {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(pos.x - 12, pos.y - 12, 24, 22, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y - 20, 15, 0, Math.PI * 2);
+        ctx.arc(pos.x - 8, pos.y - 15, 11, 0, Math.PI * 2);
+        ctx.arc(pos.x + 8, pos.y - 15, 11, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+    } else if (scene.id === 'BANK') {
+      // 1. DÃY QUẦY GIAO DỊCH KÍNH CHỐNG ĐẠN (TELLER COUNTER)
+      const bankCounterX = 80;
+      const bankCounterY = 80;
+      const bankCounterW = 480;
+      const bankCounterH = 80;
+
+      // Bóng đổ quầy giao dịch
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(bankCounterX, bankCounterY + bankCounterH, bankCounterW, 8);
+
+      // Thân quầy ốp đá cẩm thạch xám vân mây sang trọng
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(bankCounterX, bankCounterY, bankCounterW, bankCounterH);
+      // Nẹp viền màu xanh thương hiệu V-Bank
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(bankCounterX, bankCounterY + bankCounterH - 6, bankCounterW, 6);
+
+      // 3 Ô Cửa Giao Dịch Có Vách Kính Trong Suốt & Loa Đàm Thoại
+      for (let st = 0; st < 3; st++) {
+        const stX = bankCounterX + 35 + st * 150;
+        // Khung kính bảo vệ
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+        ctx.fillRect(stX, bankCounterY - 38, 100, 38);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(stX, bankCounterY - 38, 100, 38);
+
+        // Ô khoét chuyển tài liệu & tiền mặt
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(stX + 32, bankCounterY - 8, 36, 8);
+
+        // Biển hiệu tên quầy
+        ctx.fillStyle = '#065f46';
+        ctx.fillRect(stX + 15, bankCounterY - 34, 70, 14);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`QUẦY ${st + 1}: ${st === 0 ? 'VAY VỐN' : st === 1 ? 'SAO KÊ' : 'TÍN DỤNG'}`, stX + 50, bankCounterY - 24);
+        ctx.textAlign = 'left';
+
+        // Màn hình máy tính chuyên viên ngân hàng
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(stX + 35, bankCounterY + 15, 30, 20);
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(stX + 37, bankCounterY + 17, 26, 16);
+      }
+
+      // 2. BẢNG ĐIỆN TỬ TỶ GIÁ & LÃI SUẤT TIẾT KIỆM LED (Ảnh tài chính)
+      const ledX = 140;
+      const ledY = 16;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(ledX, ledY, 360, 26);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(ledX, ledY, 360, 26);
+
+      // Chữ LED đỏ/xanh chạy
+      ctx.fillStyle = '#22c55e';
+      ctx.font = 'bold 9px monospace';
+      ctx.fillText('🏦 V-BANK: LÃI SUẤT TIẾT KIỆM 7.2%/NĂM | VAY STARTUP 8.5% | USD/VND: 25.420', ledX + 10, ledY + 16);
+
+      // 3. KHU VỰC GHẾ CHỜ BỌC NỆM NAVY & BÀN TRÀ TIẾP KHÁCH DOANH NGHIỆP
+      const waitX = 120;
+      const waitY = 240;
+      // Dãy ghế chờ 4 chỗ
+      ctx.fillStyle = '#1e3a8a';
+      for (let s = 0; s < 4; s++) {
+        ctx.beginPath();
+        ctx.roundRect(waitX + s * 45, waitY, 38, 42, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#1d4ed8';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Cây nước nóng lạnh miễn phí cho khách hàng
+      const waterX = 540;
+      const waterY = 230;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(waterX, waterY, 26, 55);
+      ctx.strokeStyle = '#94a3b8';
+      ctx.strokeRect(waterX, waterY, 26, 55);
+      // Bình nước xanh úp ngược
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(waterX + 13, waterY - 8, 12, 0, Math.PI * 2);
+      ctx.fill();
 
     } else if (scene.id === 'COURT') {
-      // Bục Thẩm phán
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(260, 60, 240, 90);
-      // Quốc huy / Búa gỗ công lý
+      // 1. BỤC THẨM PHÁN & HỘI ĐỒNG XÉT XỬ
+      ctx.fillStyle = '#5c2c16';
+      ctx.beginPath();
+      ctx.roundRect(260, 60, 240, 90, 6);
+      ctx.fill();
+      ctx.strokeStyle = '#271005';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Quốc huy vàng & Búa gỗ công lý
       ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
       ctx.arc(380, 80, 16, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = '#b91c1c';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillText('CÔNG LÝ', 360, 105);
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('CÔNG LÝ', 380, 105);
+      ctx.textAlign = 'left';
 
-      // Vành móng ngựa
-      ctx.fillStyle = '#b45309';
+      // 2. VÀNH MÓNG NGỰA (BỊ CÁO)
+      ctx.fillStyle = '#78350f';
       ctx.fillRect(320, 240, 120, 50);
+      ctx.strokeStyle = '#451a03';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(320, 240, 120, 50);
       ctx.fillStyle = '#ffffff';
-      ctx.font = '9px sans-serif';
-      ctx.fillText('VÀNH MÓNG NGỰA', 335, 270);
+      ctx.font = 'bold 9px sans-serif';
+      ctx.fillText('VÀNH MÓNG NGỰA', 332, 270);
+
+      // 3. BÀN VIỆN KIỂM SÁT & LUẬT SƯ BÀO CHỮA
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(100, 180, 140, 70);
+      ctx.fillRect(520, 180, 140, 70);
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.fillText('VIỆN KIỂM SÁT', 125, 220);
+      ctx.fillText('LUẬT SƯ BÀO CHỮA', 535, 220);
     }
   }
 
@@ -1671,16 +2566,30 @@ export class WorldRenderer {
     const isWorking = animationState === 'WORK';
     const isProtesting = animationState === 'PROTEST';
     const isCelebrating = animationState === 'CELEBRATE';
+    const isIdle = animationState === 'IDLE';
 
-    const walkOffset = isMoving ? Math.sin(tick * 12) * 4 : 0;
-    const legSwing = isMoving ? Math.sin(tick * 12) * 8 : 0;
+    // Smoother walk cycle with sin(tick*10) instead of tick*12
+    const walkOffset = isMoving ? Math.sin(tick * 10) * 4 : 0;
+    const legSwing = isMoving ? Math.sin(tick * 10) * 8 : 0;
     const workTyping = isWorking ? Math.sin(tick * 20) * 2 : 0;
     const jumpCelebrate = isCelebrating ? -Math.abs(Math.sin(tick * 10) * 8) : 0;
 
-    // 1. Bóng đổ nhân vật (Drop shadow dưới chân)
+    // Idle breathing animation: nhẹ nhàng phổng lên/xuống 1-2px
+    const breathOffset = isIdle ? Math.sin(tick * 2) * 1 : 0;
+
+    // Blink animation: mắt nhắm mở mỗi ~3s
+    const isBlinking = Math.floor(tick * 0.3) % 10 === 0;
+
+    // Mirror/flip khi direction = 'LEFT'
+    if (direction === 'LEFT') {
+      ctx.scale(-1, 1);
+    }
+
+    // 1. Bóng đổ nhân vật (Drop shadow dưới chân - lerp theo walkOffset)
+    const shadowScaleX = 14 + Math.abs(walkOffset) * 0.3;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
     ctx.beginPath();
-    ctx.ellipse(0, 16, 14, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 16, shadowScaleX, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.translate(0, jumpCelebrate);
@@ -1867,7 +2776,7 @@ export class WorldRenderer {
     }
 
     // 6. Đầu Chibi Tỷ Lệ Lớn (Head: tỷ lệ 1:2.2, khuôn mặt tròn đáng yêu giàu biểu cảm)
-    const headY = -18 + walkOffset;
+    const headY = -18 + walkOffset + breathOffset;
     ctx.fillStyle = '#fed7aa'; // Màu da khuôn mặt
     ctx.beginPath();
     ctx.arc(0, headY, 15, 0, Math.PI * 2);
@@ -1914,22 +2823,35 @@ export class WorldRenderer {
       } else {
         // Mắt to tròn long lanh Chibi chuẩn anime (Ảnh tham khảo 1, 2, 3)
         const eyeColor = roleType === 'LAN_ANH' ? '#451a03' : '#0f172a';
-        ctx.fillStyle = eyeColor;
-        ctx.beginPath();
-        ctx.arc(-5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
-        ctx.arc(5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
-        ctx.fill();
 
-        // Đốm sáng trong mắt (Anime specular reflection)
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-6 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
-        ctx.arc(4 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(-4 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
-        ctx.arc(6 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
-        ctx.fill();
+        if (isBlinking) {
+          // Blink: vẽ đường kẻ ngang thay cho mắt tròn
+          ctx.strokeStyle = eyeColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(-8 + eyeOffsetX, headY);
+          ctx.lineTo(-2 + eyeOffsetX, headY);
+          ctx.moveTo(2 + eyeOffsetX, headY);
+          ctx.lineTo(8 + eyeOffsetX, headY);
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = eyeColor;
+          ctx.beginPath();
+          ctx.arc(-5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
+          ctx.arc(5 + eyeOffsetX, headY, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Đốm sáng trong mắt (Anime specular reflection)
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-6 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
+          ctx.arc(4 + eyeOffsetX, headY - 1.2, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(-4 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
+          ctx.arc(6 + eyeOffsetX, headY + 1.2, 0.7, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         // Lông mày biểu cảm
         ctx.strokeStyle = roleType === 'LAN_ANH' ? '#5c2c16' : '#0f172a';
@@ -2207,6 +3129,12 @@ export class WorldRenderer {
         { x: 390, y: 360 },
         { x: 690, y: 180 }
       );
+    } else if (scene.id === 'CAFE') {
+      lightPositions.push({ x: 170, y: 100 }, { x: 510, y: 140 }, { x: 270, y: 300 });
+    } else if (scene.id === 'BANK') {
+      lightPositions.push({ x: 320, y: 120 }, { x: 210, y: 260 }, { x: 480, y: 260 });
+    } else if (scene.id === 'VILLA') {
+      lightPositions.push({ x: 400, y: 190 }, { x: 150, y: 120 }, { x: 650, y: 120 });
     }
 
     lightPositions.forEach((pos) => {

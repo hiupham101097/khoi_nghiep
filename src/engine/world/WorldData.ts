@@ -76,84 +76,84 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
       {
         id: 'door_room',
         name: 'Phòng Trọ Sinh Viên (15m²)',
-        x: 180,
-        y: 220,
-        width: 60,
-        height: 40,
+        x: 170,
+        y: 210,
+        width: 80,
+        height: 60,
         prompt: 'Nhấn [E] để vào phòng trọ',
         actionType: 'ENTER_SCENE',
         targetScene: 'ROOM',
-        targetSpawn: { x: 200, y: 320 }
+        targetSpawn: { x: 280, y: 360 }
       },
       {
         id: 'door_office',
         name: 'Tòa Nhà StartUp Tower (Văn Phòng)',
-        x: 480,
-        y: 240,
-        width: 80,
-        height: 40,
+        x: 460,
+        y: 220,
+        width: 120,
+        height: 65,
         prompt: 'Nhấn [E] để vào văn phòng công ty',
         actionType: 'ENTER_SCENE',
         targetScene: 'OFFICE',
-        targetSpawn: { x: 350, y: 460 }
+        targetSpawn: { x: 380, y: 470 }
       },
       {
         id: 'door_villa',
         name: 'Dinh Thự Họ Hoàng (Bố Người Yêu)',
-        x: 880,
-        y: 260,
-        width: 80,
-        height: 40,
+        x: 860,
+        y: 240,
+        width: 120,
+        height: 65,
         prompt: 'Nhấn [E] để vào Biệt thự Hoàng Gia',
         actionType: 'ENTER_SCENE',
         targetScene: 'VILLA',
-        targetSpawn: { x: 400, y: 440 }
+        targetSpawn: { x: 380, y: 440 }
       },
       {
         id: 'door_cafe',
         name: 'Quán Cà Phê StartUp Hub',
-        x: 160,
-        y: 480,
-        width: 70,
-        height: 40,
+        x: 145,
+        y: 460,
+        width: 100,
+        height: 65,
         prompt: 'Nhấn [E] để vào quán cà phê (Hẹn hò / Tuyển dụng)',
         actionType: 'ENTER_SCENE',
         targetScene: 'CAFE',
-        targetSpawn: { x: 280, y: 380 }
+        targetSpawn: { x: 320, y: 430 }
       },
       {
         id: 'door_bank',
         name: 'Ngân Hàng V-Bank',
-        x: 440,
-        y: 480,
-        width: 70,
-        height: 40,
+        x: 425,
+        y: 460,
+        width: 100,
+        height: 65,
         prompt: 'Nhấn [E] để vào Ngân hàng V-Bank (Vay vốn / Sao kê)',
         actionType: 'ENTER_SCENE',
         targetScene: 'BANK',
-        targetSpawn: { x: 300, y: 360 }
+        targetSpawn: { x: 300, y: 390 }
       },
       {
         id: 'door_tax',
         name: 'Cơ Quan Đăng Ký Kinh Doanh & Thuế',
-        x: 720,
-        y: 480,
-        width: 70,
-        height: 40,
+        x: 705,
+        y: 460,
+        width: 100,
+        height: 65,
         prompt: 'Nhấn [E] để vào Cơ quan Thuế & Đăng ký doanh nghiệp',
         actionType: 'OPEN_TAX'
       },
       {
         id: 'door_court',
         name: 'Tòa Án Nhân Dân Thành Phố',
-        x: 1000,
-        y: 460,
-        width: 80,
-        height: 40,
+        x: 980,
+        y: 450,
+        width: 120,
+        height: 65,
         prompt: 'Nhấn [E] để vào Tòa Án (Xem xét pháp lý / Kiện tụng)',
         actionType: 'ENTER_SCENE',
         targetScene: 'COURT',
-        targetSpawn: { x: 350, y: 380 }
+        targetSpawn: { x: 360, y: 430 }
       }
     ],
     deskPositions: []

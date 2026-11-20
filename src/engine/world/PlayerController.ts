@@ -212,15 +212,16 @@ export class PlayerController {
     return false;
   }
 
-  // Tìm kiếm vùng tương tác trong phạm vi 50 pixels
+  // Tìm kiếm vùng tương tác gần nhất theo khoảng cách tới hộp giới hạn (Bounding Box)
   private findNearestInteractiveZone(zones: InteractiveZone[]): InteractiveZone | null {
     let closestZone: InteractiveZone | null = null;
-    let minDistance = 55; // Khoảng cách tương tác tối đa
+    let minDistance = 85; // Khoảng cách tương tác rộng rãi (85px) giúp người chơi dễ kích hoạt
 
     for (const zone of zones) {
-      const centerX = zone.x + zone.width / 2;
-      const centerY = zone.y + zone.height / 2;
-      const dist = Math.hypot(this.pos.x - centerX, this.pos.y - centerY);
+      // Tính khoảng cách từ nhân vật tới cạnh gần nhất của hình chữ nhật zone
+      const closestX = Math.max(zone.x, Math.min(this.pos.x, zone.x + zone.width));
+      const closestY = Math.max(zone.y, Math.min(this.pos.y, zone.y + zone.height));
+      const dist = Math.hypot(this.pos.x - closestX, this.pos.y - closestY);
 
       if (dist < minDistance) {
         minDistance = dist;
