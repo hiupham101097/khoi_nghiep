@@ -29,7 +29,8 @@ import {
   Users,
   FolderGit2,
   Coffee,
-  Sparkles
+  Sparkles,
+  Building2
 } from 'lucide-react';
 import { soundManager } from '../engine/core/SoundManager';
 import { AVAILABLE_OFFICES, ENTERPRISE_STAGES } from '../engine/economy/CompanyManager';
@@ -486,22 +487,47 @@ export const HUD: React.FC<HUDProps> = ({
           <span className="hidden sm:inline">CEO Suite</span>
         </button>
 
-        {/* Chuyển nhanh giữa Văn Phòng và Thành Phố (Ảnh tham khảo 3: "Lobby / City") */}
-        <button
-          onClick={() => {
-            if (gsm.currentSceneId === 'OFFICE' || gsm.currentSceneId === 'CEO_OFFICE') {
-              gsm.switchScene('CITY', { x: 520, y: 270 });
-            } else {
-              gsm.switchScene('OFFICE', { x: 380, y: 470 });
-            }
-            soundManager.playClick();
-          }}
-          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
-          title="Chuyển Cảnh nhanh (Văn Phòng ⇆ Thành Phố)"
-        >
-          <MapPin className="w-3.5 h-3.5 text-sky-400" />
-          <span className="hidden md:inline">{gsm.currentSceneId === 'OFFICE' || gsm.currentSceneId === 'CEO_OFFICE' ? 'Ra Phố' : 'Vào VP'}</span>
-        </button>
+        {/* Chuyển nhanh hoặc mở Thang Máy Tòa Nhà */}
+        {['COMPANY_EXTERIOR', 'FLOOR_1', 'FLOOR_2', 'FLOOR_3', 'OFFICE', 'CEO_OFFICE'].includes(gsm.currentSceneId) ? (
+          <>
+            <button
+              onClick={() => {
+                gsm.isElevatorModalOpen = true;
+                soundManager.playClick();
+                gsm.notify();
+              }}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-950/70 hover:bg-amber-900 text-amber-300 border border-amber-600/50 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+              title="Mở Thang Máy Tòa Nhà (Chọn Tầng 1, 2, 3, Mặt Tiền)"
+            >
+              <Building2 className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden md:inline">Thang Máy</span>
+            </button>
+
+            <button
+              onClick={() => {
+                gsm.switchScene('CITY', { x: 520, y: 270 });
+                soundManager.playClick();
+              }}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+              title="Rời Tòa Nhà Ra Đường Phố"
+            >
+              <MapPin className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden md:inline">Ra Phố</span>
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={() => {
+              gsm.switchScene('COMPANY_EXTERIOR', { x: 500, y: 720 });
+              soundManager.playClick();
+            }}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 border border-slate-700 font-bold text-xs transition-all active:scale-95 cursor-pointer"
+            title="Đến Khuôn Viên Trụ Sở Công Ty"
+          >
+            <Building2 className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden md:inline">Vào Trụ Sở</span>
+          </button>
+        )}
 
         {/* Họp toàn thể công ty (Standup Meeting - Ảnh tham khảo 3: "Promotion / Meeting") */}
         <button

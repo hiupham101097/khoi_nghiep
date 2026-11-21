@@ -47,6 +47,7 @@ export class WorldRenderer {
   private ctx: CanvasRenderingContext2D;
   private rainDrops: { x: number; y: number; speed: number; length: number }[] = [];
   private spriteImages: Map<string, HTMLImageElement> = new Map();
+  private buildingImages: Map<string, HTMLImageElement> = new Map();
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -59,7 +60,7 @@ export class WorldRenderer {
     this.loadSprites();
   }
 
-  // Tải các sprite Chibi 2D từ thư mục public/sprites/
+  // Tải các sprite Chibi 2D từ thư mục public/sprites/ và ảnh kiến trúc tòa nhà
   private loadSprites() {
     if (typeof window === 'undefined') return;
     const roles = ['ceo', 'office', 'developer', 'designer', 'hr', 'assistant'];
@@ -74,6 +75,21 @@ export class WorldRenderer {
           this.spriteImages.set(key, img);
         };
       });
+    });
+
+    // Tải trước sơ đồ kiến trúc các tầng từ public/building_refs/
+    const buildingPlans = [
+      { key: 'FLOOR_1', url: '/building_refs/floor1_reception_warehouse.jpg' },
+      { key: 'FLOOR_2', url: '/building_refs/floor2_workspace.jpg' },
+      { key: 'FLOOR_3', url: '/building_refs/floor3_executive.jpg' },
+      { key: 'COMPANY_EXTERIOR', url: '/building_refs/overview_3floors.jpg' }
+    ];
+    buildingPlans.forEach((plan) => {
+      const img = new Image();
+      img.src = plan.url;
+      img.onload = () => {
+        this.buildingImages.set(plan.key, img);
+      };
     });
   }
 
@@ -772,7 +788,7 @@ export class WorldRenderer {
       ctx.fillStyle = '#10b981';
       ctx.fillRect(0, 36, scene.width, 4);
 
-    } else {
+    } else if (scene.id === 'COURT') {
       // Tòa Án Nhân Dân Thành Phố: Sàn gỗ sồi uy nghiêm & Thảm nhung xanh thẩm phán
       ctx.fillStyle = '#334155';
       ctx.fillRect(0, 0, scene.width, scene.height);
@@ -788,6 +804,92 @@ export class WorldRenderer {
       ctx.fillRect(0, 0, scene.width, 40);
       ctx.fillStyle = '#b91c1c';
       ctx.fillRect(0, 36, scene.width, 4);
+
+    } else if (scene.id === 'COMPANY_EXTERIOR') {
+      // 1. Ngoại cảnh & Mặt tiền Trụ sở StartUp Co.
+      // Sân trước lát gạch plaza xám sáng cao cấp
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(0, 0, scene.width, scene.height);
+
+      // Đường nhựa phía dưới (y: 600 - 800)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(0, 600, scene.width, 200);
+
+      // Vạch kẻ đường đứt đoạn
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([25, 20]);
+      ctx.beginPath();
+      ctx.moveTo(0, 700);
+      ctx.lineTo(scene.width, 700);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Vạch người đi bộ qua đường (Zebra crosswalk)
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 6; i++) {
+        ctx.fillRect(480, 610 + i * 28, 70, 16);
+      }
+
+      // Vỉa hè đi bộ lát gạch terrazzo cam
+      ctx.fillStyle = '#fed7aa';
+      ctx.fillRect(0, 560, scene.width, 40);
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < scene.width; x += 30) {
+        ctx.strokeRect(x, 560, 30, 40);
+      }
+
+      // Lưới gạch sân trước (Plaza tiles)
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < scene.width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 280);
+        ctx.lineTo(x, 560);
+        ctx.stroke();
+      }
+      for (let y = 280; y < 560; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(scene.width, y);
+        ctx.stroke();
+      }
+
+      // Khu vực lối vào giao nhận kho (Góc phải)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(860, 280, 120, 280);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([12, 10]);
+      ctx.strokeRect(865, 285, 110, 270);
+      ctx.setLineDash([]);
+
+    } else if (scene.id === 'FLOOR_1' || scene.id === 'FLOOR_2' || scene.id === 'FLOOR_3') {
+      const planImg = this.buildingImages.get(scene.id);
+      if (planImg && planImg.complete && planImg.naturalWidth > 0) {
+        ctx.drawImage(planImg, 0, 0, scene.width, scene.height);
+      } else {
+        // Fallback sàn nhà chuẩn kiến trúc
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillRect(0, 0, scene.width, scene.height);
+
+        // Lưới gạch văn phòng 32x32
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < scene.width; x += 32) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, scene.height);
+          ctx.stroke();
+        }
+        for (let y = 0; y < scene.height; y += 32) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(scene.width, y);
+          ctx.stroke();
+        }
+      }
     }
   }
 
@@ -2583,6 +2685,495 @@ export class WorldRenderer {
       ctx.font = 'bold 8px sans-serif';
       ctx.fillText('VIỆN KIỂM SÁT', 125, 220);
       ctx.fillText('LUẬT SƯ BÀO CHỮA', 535, 220);
+
+    } else if (scene.id === 'COMPANY_EXTERIOR') {
+      this.renderCompanyExterior(scene, timePeriod, tick);
+    } else if (scene.id === 'FLOOR_1' || scene.id === 'FLOOR_2' || scene.id === 'FLOOR_3') {
+      this.renderFloorInteractiveElements(scene, tick);
+    }
+  }
+
+  // ============================================================================
+  // VẼ MẶT TIỀN TÒA NHÀ CÔNG TY 3 TẦNG KÍNH + CHỐT BẢO VỆ + BARRIER (Phase 5)
+  // ============================================================================
+  private renderCompanyExterior(scene: MapSceneConfig, _timePeriod: DayTimePeriod, _tick: number) {
+    const ctx = this.ctx;
+
+    // 1. TÒA NHÀ TRỤ SỞ 3 TẦNG KÍNH HIỆN ĐẠI (Phía Bắc, y: 0 - 280)
+    // Khối tường bê tông kiến trúc
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(100, 30, 1000, 250);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(100, 30, 1000, 250);
+
+    // Kính phản chiếu bầu trời tầng 3, tầng 2, tầng 1
+    for (let floor = 0; floor < 3; floor++) {
+      const floorY = 45 + floor * 75;
+      const glassGradient = ctx.createLinearGradient(0, floorY, 0, floorY + 60);
+      glassGradient.addColorStop(0, '#38bdf8');
+      glassGradient.addColorStop(0.5, '#0284c7');
+      glassGradient.addColorStop(1, '#0369a1');
+
+      ctx.fillStyle = glassGradient;
+      ctx.fillRect(120, floorY, 960, 60);
+
+      // Khung kính chia ô hiện đại (Mullions)
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      for (let x = 120; x <= 1080; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, floorY);
+        ctx.lineTo(x, floorY + 60);
+        ctx.stroke();
+      }
+      ctx.strokeRect(120, floorY, 960, 60);
+    }
+
+    // Biển tên công ty trên đỉnh tòa nhà
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillRect(360, 10, 480, 28);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(360, 10, 480, 28);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🚀 STARTUP CO. HEADQUARTERS — TRỤ SỞ CÔNG NGHỆ', 600, 29);
+    ctx.textAlign = 'left';
+
+    // Mái đón Canopy kính sảnh chính
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.fillRect(450, 240, 200, 40);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(450, 240, 200, 40);
+
+    // Bậc tam cấp đá hoa cương sảnh chính
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fillRect(460, 275, 180, 10);
+    ctx.fillStyle = '#cbd5e1';
+    ctx.fillRect(450, 285, 200, 10);
+
+    // Cửa cuốn Nhà Kho bên phải (x: 870, y: 280, w: 90, h: 35)
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(870, 250, 90, 35);
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(870, 250, 90, 35);
+    // Sọc cuốn kim loại
+    for (let sy = 254; sy < 285; sy += 5) {
+      ctx.beginPath();
+      ctx.moveTo(870, sy);
+      ctx.lineTo(960, sy);
+      ctx.stroke();
+    }
+    // Biển báo Nhà Kho
+    ctx.fillStyle = '#eab308';
+    ctx.font = 'bold 8px sans-serif';
+    ctx.fillText('📦 KHO HÀNG', 885, 245);
+
+    // 2. CHỐT BẢO VỆ BÁC BA (x: 340, y: 490, w: 80, h: 60)
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(340, 490, 80, 60);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(340, 490, 80, 60);
+    // Cửa sổ kính chốt bảo vệ
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(348, 502, 64, 25);
+    ctx.strokeStyle = '#0284c7';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(348, 502, 64, 25);
+    // Mái che chốt bảo vệ
+    ctx.fillStyle = '#0284c7';
+    ctx.fillRect(335, 484, 90, 8);
+    // Màn hình camera quan sát
+    ctx.fillStyle = '#10b981';
+    ctx.fillRect(355, 508, 12, 10);
+    ctx.fillRect(375, 508, 12, 10);
+    // Biển Chốt Bảo Vệ
+    ctx.fillStyle = '#b91c1c';
+    ctx.font = 'bold 7px sans-serif';
+    ctx.fillText('🛡️ BẢO VỆ', 355, 498);
+
+    // 3. THANH CHẮN XE TỰ ĐỘNG (BOOM BARRIER) (ext_boom_barrier)
+    const barrierDoor = scene.doors?.find((d) => d.id === 'ext_boom_barrier');
+    const barrierAngle = barrierDoor ? (barrierDoor.openAngle ?? 0) : 0; // 0 = đóng nằm ngang, 1 = mở nâng lên góc 75 độ
+
+    // Trụ máy Barie màu cam nổi bật
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(425, 525, 20, 32);
+    ctx.strokeStyle = '#c2410c';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(425, 525, 20, 32);
+    // Đèn LED chỉ thị trên trụ barie (Đỏ khi đóng, Xanh khi mở)
+    ctx.fillStyle = barrierAngle > 0.5 ? '#22c55e' : '#ef4444';
+    ctx.beginPath();
+    ctx.arc(435, 532, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cần chắn nâng hạ (Rotating Boom Arm)
+    ctx.save();
+    ctx.translate(440, 540);
+    // Xoay cần lên theo góc mở (0 rad đến -1.3 rad ~ 75 độ)
+    ctx.rotate(-barrierAngle * 1.3);
+
+    // Thanh cần màu trắng
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, -4, 95, 8);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0, -4, 95, 8);
+
+    // Vạch phản quang đỏ sọc chéo
+    ctx.fillStyle = '#dc2626';
+    for (let bx = 10; bx < 90; bx += 18) {
+      ctx.fillRect(bx, -4, 9, 8);
+    }
+    ctx.restore();
+
+    // 4. HÀNG RÀO & CỔNG ĐI BỘ
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 2;
+    // Cột trụ hàng rào
+    [40, 180, 340, 550, 750, 950, 1150].forEach((colX) => {
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(colX - 4, 535, 8, 25);
+    });
+    // Nan rào sắt
+    for (let rx = 40; rx < 340; rx += 14) {
+      ctx.beginPath();
+      ctx.moveTo(rx, 538);
+      ctx.lineTo(rx, 558);
+      ctx.stroke();
+    }
+    for (let rx = 550; rx < 1160; rx += 14) {
+      ctx.beginPath();
+      ctx.moveTo(rx, 538);
+      ctx.lineTo(rx, 558);
+      ctx.stroke();
+    }
+
+    // 5. CÂY XANH & BỒN HOA KHUÔN VIÊN
+    // Bồn hoa trái
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(220, 380, 100, 40);
+    ctx.strokeStyle = '#78350f';
+    ctx.strokeRect(220, 380, 100, 40);
+    // Hoa nhiều màu
+    ['#ef4444', '#ec4899', '#facc15', '#a855f7'].forEach((c, idx) => {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(235 + idx * 22, 400, 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Bồn hoa phải
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(680, 380, 100, 40);
+    ctx.strokeStyle = '#78350f';
+    ctx.strokeRect(680, 380, 100, 40);
+    ['#38bdf8', '#facc15', '#f97316', '#22c55e'].forEach((c, idx) => {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(695 + idx * 22, 400, 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Cây râm mát hai bên sân
+    [160, 800].forEach((treeX) => {
+      // Bóng cây
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(treeX + 30, 430, 45, 18, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thân cây
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(treeX + 24, 380, 12, 45);
+
+      // Tán cây xanh
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.arc(treeX + 30, 360, 36, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(treeX + 24, 350, 26, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Ghế nghỉ khuôn viên
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(225, 435, 90, 16);
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(225, 435, 90, 16);
+
+    // 6. CỬA KÍNH SẢNH CHÍNH (ext_main_glass_door)
+    const mainGlass = scene.doors?.find((d) => d.id === 'ext_main_glass_door');
+    const openProgress = mainGlass ? (mainGlass.openAngle ?? 0) : 0;
+    const slideOffset = openProgress * 45;
+
+    // Ray trượt inox phía trên
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(480, 275, 140, 5);
+
+    // Cánh kính trái (trượt sang trái)
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.fillRect(485 - slideOffset, 280, 65, 35);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(485 - slideOffset, 280, 65, 35);
+    // Tay nắm inox cánh trái
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(540 - slideOffset, 290, 3, 16);
+
+    // Cánh kính phải (trượt sang phải)
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+    ctx.fillRect(550 + slideOffset, 280, 65, 35);
+    ctx.strokeRect(550 + slideOffset, 280, 65, 35);
+    // Tay nắm inox cánh phải
+    ctx.fillRect(555 + slideOffset, 290, 3, 16);
+  }
+
+  // ============================================================================
+  // VẼ CÁC CHI TIẾT TƯƠNG TÁC: CỬA, NHÀ VỆ SINH, THANG MÁY, SERVER TẦNG 1-3
+  // ============================================================================
+  private renderFloorInteractiveElements(scene: MapSceneConfig, tick: number) {
+    const ctx = this.ctx;
+
+    // 1. VẼ TOÀN BỘ HỆ THỐNG CỬA TƯƠNG TÁC (Interactive Doors)
+    if (scene.doors && scene.doors.length > 0) {
+      for (const door of scene.doors) {
+        const isOpen = door.isOpen;
+        const angle = door.openAngle ?? (isOpen ? 1 : 0);
+
+        if (door.doorType === 'WOOD') {
+          // Khung cửa gỗ sồi
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(door.x, door.y, door.width, door.height);
+
+          if (angle > 0.05) {
+            // Cửa đang mở: cánh cửa xoay mở vào trong
+            ctx.save();
+            ctx.translate(door.x + 2, door.y + 2);
+            ctx.rotate(angle * 1.3);
+
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(0, 0, door.width - 4, 6);
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(0, 0, door.width - 4, 6);
+
+            // Tay nắm đồng
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(door.width - 8, 3, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+
+            // Hiển thị ô lối đi mở
+            ctx.fillStyle = 'rgba(254, 240, 138, 0.15)';
+            ctx.fillRect(door.x, door.y, door.width, door.height);
+          } else {
+            // Cửa đóng kín hoàn toàn
+            ctx.fillStyle = '#92400e';
+            ctx.fillRect(door.x + 2, door.y + 2, door.width - 4, door.height - 4);
+            ctx.strokeStyle = '#451a03';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(door.x + 2, door.y + 2, door.width - 4, door.height - 4);
+
+            // Tay nắm cửa
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(door.x + door.width - 6, door.y + door.height / 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+        } else if (door.doorType === 'GLASS') {
+          // Cửa kính trượt 2 cánh
+          const slideW = (door.width / 2 - 4) * angle;
+
+          // Ray trượt kim loại
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(door.x, door.y, door.width, 3);
+
+          // Cánh kính trái
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+          ctx.fillRect(door.x + 1 - slideW, door.y + 3, door.width / 2 - 2, door.height - 3);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(door.x + 1 - slideW, door.y + 3, door.width / 2 - 2, door.height - 3);
+
+          // Cánh kính phải
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
+          ctx.fillRect(door.x + door.width / 2 + slideW, door.y + 3, door.width / 2 - 2, door.height - 3);
+          ctx.strokeRect(door.x + door.width / 2 + slideW, door.y + 3, door.width / 2 - 2, door.height - 3);
+
+        } else if (door.doorType === 'WC') {
+          // CỬA BUỒNG VỆ SINH RIÊNG BIỆT (Có bồn cầu chi tiết bên trong)
+          const isWomen = door.id.includes('w') || door.id.includes('women');
+          const panelColor = isWomen ? '#fda4af' : '#64748b';
+          const strokeColor = isWomen ? '#f43f5e' : '#334155';
+
+          // Khi cửa mở (angle > 0.2): Vẽ bồn cầu toilet bên trong buồng!
+          if (angle > 0.15) {
+            // Nền buồng vệ sinh
+            ctx.fillStyle = isWomen ? '#fff1f2' : '#f0fdf4';
+            ctx.fillRect(door.x - 4, door.y - 25, door.width + 8, 25);
+
+            // Bồn cầu sứ trắng (Toilet bowl)
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(door.x + door.width / 2, door.y - 12, 7, 9, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Lỗ bồn cầu
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.ellipse(door.x + door.width / 2, door.y - 11, 4, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Két nước phía sau
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillRect(door.x + door.width / 2 - 7, door.y - 24, 14, 6);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.strokeRect(door.x + door.width / 2 - 7, door.y - 24, 14, 6);
+
+            // Nút xả nước inox
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(door.x + door.width / 2, door.y - 21, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hộp giấy vệ sinh trên vách
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(door.x + door.width - 5, door.y - 16, 4, 5);
+          }
+
+          // Khung buồng
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(door.x, door.y, door.width, door.height);
+
+          if (angle > 0.15) {
+            // Cánh cửa xoay mở
+            ctx.save();
+            ctx.translate(door.x, door.y);
+            ctx.rotate(angle * 1.4);
+            ctx.fillStyle = panelColor;
+            ctx.fillRect(0, 0, door.width - 2, 4);
+            ctx.restore();
+          } else {
+            // Cánh cửa đóng: chốt hiển thị trạng thái
+            ctx.fillStyle = panelColor;
+            ctx.fillRect(door.x + 1, door.y + 1, door.width - 2, door.height - 2);
+
+            // Khóa chốt an toàn (Xanh: Trống, Đỏ: Đang có người)
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(door.x + door.width / 2, door.y + door.height / 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+        } else if (door.doorType === 'ELEVATOR') {
+          // CỬA THANG MÁY INOX SANG TRỌNG
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(door.x, door.y, door.width, door.height);
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(door.x, door.y, door.width, door.height);
+
+          // Khe chia đôi 2 cánh thang máy
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(door.x + door.width / 2, door.y);
+          ctx.lineTo(door.x + door.width / 2, door.y + door.height);
+          ctx.stroke();
+
+          // Màn hình LED kỹ thuật số hiển thị tầng phía trên
+          const floorNum = scene.id === 'FLOOR_3' ? '3' : scene.id === 'FLOOR_2' ? '2' : '1';
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(door.x + door.width / 2 - 14, door.y - 14, 28, 12);
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(door.x + door.width / 2 - 14, door.y - 14, 28, 12);
+
+          ctx.fillStyle = '#fef08a';
+          ctx.font = 'bold 8px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`▲ ${floorNum}`, door.x + door.width / 2, door.y - 5);
+          ctx.textAlign = 'left';
+
+          // Nút bấm gọi thang máy bên cạnh
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(door.x + door.width + 4, door.y + 8, 8, 16);
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.arc(door.x + door.width + 8, door.y + 13, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // 2. CHI TIẾT ĐẶC TRƯNG TỪNG TẦNG
+    if (scene.id === 'FLOOR_2') {
+      // Đèn LED nhấp nháy tủ máy chủ Server Room
+      const serverX = 175;
+      const serverY = 280;
+      for (let rack = 0; rack < 3; rack++) {
+        const rx = serverX + rack * 25;
+        // Đèn LED chớp tắt
+        for (let led = 0; led < 6; led++) {
+          const ly = serverY + 15 + led * 12;
+          const isBlink = Math.sin(tick * 8 + rack * 3 + led) > 0.2;
+          ctx.fillStyle = isBlink ? (led % 2 === 0 ? '#22c55e' : '#38bdf8') : '#064e3b';
+          ctx.fillRect(rx, ly, 3, 2);
+        }
+      }
+
+      // Khói bốc lên từ máy pha cafe Pantry
+      const steamY = 465 - (tick * 15) % 15;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.beginPath();
+      ctx.arc(630, steamY, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (scene.id === 'FLOOR_3') {
+      // Màn hình hội nghị Boardroom chiếu biểu đồ tăng trưởng
+      const screenX = 590;
+      const screenY = 60;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(screenX, screenY, 120, 45);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(screenX, screenY, 120, 45);
+
+      // Đường biểu đồ tăng trưởng màu xanh lá vút lên
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(screenX + 10, screenY + 35);
+      ctx.lineTo(screenX + 35, screenY + 30);
+      ctx.lineTo(screenX + 60, screenY + 22);
+      ctx.lineTo(screenX + 85, screenY + 25);
+      ctx.lineTo(screenX + 110, screenY + 12);
+      ctx.stroke();
+
+      // Cúp vàng trong phòng Giám Đốc
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(360, 95, 5, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
@@ -3432,6 +4023,36 @@ export class WorldRenderer {
       lightPositions.push({ x: 320, y: 120 }, { x: 210, y: 260 }, { x: 480, y: 260 });
     } else if (scene.id === 'VILLA') {
       lightPositions.push({ x: 400, y: 190 }, { x: 150, y: 120 }, { x: 650, y: 120 });
+    } else if (scene.id === 'COMPANY_EXTERIOR') {
+      lightPositions.push(
+        { x: 380, y: 520 }, // Chốt bảo vệ
+        { x: 550, y: 300 }, // Sảnh đón
+        { x: 220, y: 400 }, // Cột đèn trái
+        { x: 750, y: 400 }, // Cột đèn phải
+        { x: 500, y: 650 }  // Đèn đường
+      );
+    } else if (scene.id === 'FLOOR_1') {
+      lightPositions.push(
+        { x: 512, y: 380 }, // Sảnh lễ tân
+        { x: 200, y: 380 }, // Kho hàng
+        { x: 800, y: 150 }, // Hành chính
+        { x: 860, y: 400 }  // Thang máy
+      );
+    } else if (scene.id === 'FLOOR_2') {
+      lightPositions.push(
+        { x: 210, y: 360 }, // IT Server
+        { x: 420, y: 360 }, // Open Workspace
+        { x: 650, y: 480 }, // Pantry
+        { x: 300, y: 130 }, // HR
+        { x: 650, y: 130 }  // Họp nhỏ
+      );
+    } else if (scene.id === 'FLOOR_3') {
+      lightPositions.push(
+        { x: 280, y: 160 }, // Bàn CEO
+        { x: 650, y: 140 }, // Boardroom
+        { x: 480, y: 330 }, // VIP Lounge
+        { x: 370, y: 480 }  // Pháp chế
+      );
     }
 
     lightPositions.forEach((pos) => {

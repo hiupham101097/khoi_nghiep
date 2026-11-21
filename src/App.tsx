@@ -17,6 +17,7 @@ import { SaveMenuModal } from './ui/SaveMenuModal';
 import { EmployeeReviewModal } from './ui/EmployeeReviewModal';
 import { CollectivePetitionModal } from './ui/CollectivePetitionModal';
 import { DialogModal } from './ui/DialogModal';
+import { ElevatorModal } from './ui/ElevatorModal';
 import { VirtualControls } from './ui/VirtualControls';
 import { ENTERPRISE_STAGES } from './engine/economy/CompanyManager';
 import { soundManager } from './engine/core/SoundManager';
@@ -256,6 +257,43 @@ export const App: React.FC = () => {
       }
     }
 
+    // 2b. Kiểm tra click trực tiếp vào Cửa (InteractiveDoor)
+    if (gsm.currentScene.doors && gsm.currentScene.doors.length > 0) {
+      const clickedDoor = gsm.currentScene.doors.find((d) => {
+        return (
+          worldTargetX >= d.x - 10 &&
+          worldTargetX <= d.x + d.width + 10 &&
+          worldTargetY >= d.y - 10 &&
+          worldTargetY <= d.y + d.height + 10
+        );
+      });
+      if (clickedDoor) {
+        const doorCenterX = clickedDoor.x + clickedDoor.width / 2;
+        const doorCenterY = clickedDoor.y + clickedDoor.height / 2;
+        const distToPlayer = Math.hypot(gsm.playerController.pos.x - doorCenterX, gsm.playerController.pos.y - doorCenterY);
+
+        if (distToPlayer < 90) {
+          if (clickedDoor.doorType === 'ELEVATOR') {
+            gsm.isElevatorModalOpen = true;
+          } else {
+            clickedDoor.isOpen = !clickedDoor.isOpen;
+            soundManager.playDoor();
+            gsm.addFloatingText(
+              clickedDoor.isOpen ? '🚪 Mở Cửa' : '🚪 Đóng Cửa',
+              doorCenterX,
+              doorCenterY - 20,
+              clickedDoor.isOpen ? '#22c55e' : '#f59e0b'
+            );
+          }
+          gsm.notify();
+          return;
+        } else {
+          gsm.playerController.setTargetDestination(doorCenterX, doorCenterY);
+          return;
+        }
+      }
+    }
+
     // 3. Thiết lập đích đến liên tục (Smooth Continuous Walk)
     navigatingZoneRef.current = null;
     gsm.playerController.setTargetDestination(worldTargetX, worldTargetY);
@@ -438,6 +476,15 @@ export const App: React.FC = () => {
       {/* 11. Hộp thoại cốt truyện & tương tác nhân vật (RPG Dialog Box) */}
       {gsm.activeDialog !== null && (
         <DialogModal gsm={gsm} />
+      )}
+
+      {/* 12. Thang Máy Điều Khiển Chọn Tầng (Floor Selection Elevator Panel) */}
+      {gsm.isElevatorModalOpen && (
+        <ElevatorModal
+          currentFloor={gsm.currentSceneId}
+          onSelectFloor={(floor) => gsm.selectElevatorFloor(floor)}
+          onClose={() => gsm.closeElevatorModal()}
+        />
       )}
     </div>
   );

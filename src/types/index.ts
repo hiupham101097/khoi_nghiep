@@ -48,6 +48,36 @@ export interface PlayerStats {
   techSkill: number;      // Kỹ năng chuyên môn 1 - 100
 }
 
+export type SceneId = 
+  | 'CITY' 
+  | 'ROOM' 
+  | 'OFFICE' 
+  | 'CEO_OFFICE' 
+  | 'VILLA' 
+  | 'CAFE' 
+  | 'BANK' 
+  | 'COURT'
+  | 'COMPANY_EXTERIOR'
+  | 'FLOOR_1'
+  | 'FLOOR_2'
+  | 'FLOOR_3';
+
+export interface InteractiveDoor {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  doorType: 'WOOD' | 'GLASS' | 'WC' | 'GATE' | 'ELEVATOR';
+  isOpen: boolean;
+  isLocked?: boolean;
+  openAngle?: number; // 0 (đóng) đến 1 (mở hoàn toàn)
+  targetFloor?: SceneId;
+  targetSpawn?: Position2D;
+  autoSensor?: boolean; // Tự động mở khi lại gần (cho cửa kính sảnh chính hoặc thanh chắn)
+}
+
 export type EmployeeRole = 'FRONTEND' | 'BACKEND' | 'FULLSTACK' | 'DESIGNER' | 'TESTER' | 'PRODUCT_MANAGER';
 export type SkillLevel = 'INTERN' | 'JUNIOR' | 'MID' | 'SENIOR' | 'LEAD';
 export type PersonalityType = 'AMBITIOUS' | 'HARDWORKING' | 'PRAGMATIC' | 'CREATIVE' | 'SOCIAL' | 'LAID_BACK';
@@ -454,7 +484,7 @@ export interface GameSaveState {
   legal: LegalStatus;
   
   // Vị trí người chơi
-  currentScene: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT';
+  currentScene: SceneId;
   playerPos: Position2D;
   playerDir: CharacterDirection;
   

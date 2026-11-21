@@ -14,7 +14,8 @@ import {
   SprintStrategy,
   CollectivePetition,
   FloatingText,
-  CharacterDirection
+  CharacterDirection,
+  SceneId
 } from '../../types';
 import { TimeManager } from './TimeManager';
 import { PlayerController } from '../world/PlayerController';
@@ -36,8 +37,9 @@ export class GameStateManager {
   public timeManager: TimeManager;
   public playerController: PlayerController;
 
-  public currentSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT' = 'VILLA'; // Bắt đầu tại Biệt thự cuộc gặp 500 triệu
+  public currentSceneId: SceneId = 'VILLA'; // Bắt đầu tại Biệt thự cuộc gặp 500 triệu
   public currentScene: MapSceneConfig = WORLD_MAPS.VILLA;
+  public isElevatorModalOpen: boolean = false;
 
   // Trạng thái công ty & nhân sự
   public companyName: string = 'NextGen Solutions';
@@ -380,7 +382,7 @@ export class GameStateManager {
       });
 
       // 3. Cập nhật chuyển động tự hành & suy nghĩ thoại cho nhân viên AI trong văn phòng
-      if (this.currentSceneId === 'OFFICE') {
+      if (this.currentSceneId === 'OFFICE' || this.currentSceneId === 'FLOOR_2' || this.currentSceneId === 'FLOOR_1' || this.currentSceneId === 'FLOOR_3') {
         const isWorkHour = this.timeManager.isWorkHour();
         const isLunch = this.timeManager.isLunchHour();
         const isOT = this.isOvertimeActive && this.timeManager.isOvertimeHour();
@@ -412,14 +414,17 @@ export class GameStateManager {
           this.addFloatingText('🔔 HỌP DAILY STANDUP 09:00', 380, 70, '#38bdf8');
         }
 
-        const whiteboardPos = { x: 380, y: 55 };
-        const ceoDeskPos = { x: 160, y: 140 };
-        const coffeePos = { x: 620, y: 90 };
-        const loungePos = { x: 500, y: 370 };
-        const exitPos = { x: 380, y: 480 };
+        const whiteboardPos = this.currentSceneId === 'FLOOR_2' ? { x: 500, y: 140 } : { x: 380, y: 55 };
+        const ceoDeskPos = this.currentSceneId === 'FLOOR_3' ? { x: 260, y: 140 } : { x: 160, y: 140 };
+        const coffeePos = this.currentSceneId === 'FLOOR_2' ? { x: 620, y: 460 } : { x: 620, y: 90 };
+        const loungePos = this.currentSceneId === 'FLOOR_3' ? { x: 450, y: 320 } : { x: 500, y: 370 };
+        const exitPos = this.currentSceneId === 'FLOOR_2' ? { x: 60, y: 140 } : { x: 380, y: 480 };
 
         this.employees.forEach((emp, idx) => {
-          const deskPos = this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
+          const deskPos = (this.currentScene.deskPositions && this.currentScene.deskPositions.length > 0)
+            ? this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length]
+            : { x: 200, y: 250 };
+
           EmployeeAIEngine.updateMovementAndDialogue(
             emp,
             deltaTime,
@@ -513,9 +518,54 @@ export class GameStateManager {
           this.talkWithFather();
         } else if (this.currentSceneId === 'CAFE') {
           this.dateWithLanAnh();
-        } else if (this.currentSceneId === 'CITY') {
+        } else if (this.currentSceneId === 'CITY' || this.currentSceneId === 'COMPANY_EXTERIOR') {
           this.talkWithSecurityGuard();
+        } else if (this.currentSceneId === 'FLOOR_1') {
+          if (zone.id === 'f1_zone_reception') {
+            this.talkWithReceptionist();
+          } else if (zone.id === 'f1_zone_warehouse_mgr') {
+            this.talkWithWarehouseClerk();
+          }
         }
+        break;
+
+      case 'OPEN_ELEVATOR':
+        this.isElevatorModalOpen = true;
+        soundManager.playClick();
+        this.notify();
+        break;
+
+      case 'TOGGLE_DOOR':
+        if (zone.doorId && this.currentScene.doors) {
+          const door = this.currentScene.doors.find((d) => d.id === zone.doorId);
+          if (door) {
+            door.isOpen = !door.isOpen;
+            soundManager.playDoor();
+            this.addFloatingText(
+              door.isOpen ? '🚪 Mở Cửa' : '🚪 Đóng Cửa',
+              this.playerController.pos.x,
+              this.playerController.pos.y - 25,
+              door.isOpen ? '#22c55e' : '#f59e0b'
+            );
+            this.notify();
+          }
+        }
+        break;
+
+      case 'USE_STAIRS':
+        if (zone.targetScene) {
+          soundManager.playFootstep();
+          this.switchScene(zone.targetScene, zone.targetSpawn);
+          this.addFloatingText('🚶 Cầu thang bộ', this.playerController.pos.x, this.playerController.pos.y - 25, '#38bdf8');
+        }
+        break;
+
+      case 'USE_WC':
+        this.playerStats.energy = Math.min(100, this.playerStats.energy + 5);
+        this.playerStats.health = Math.min(100, this.playerStats.health + 5);
+        soundManager.playSuccess();
+        this.addFloatingText('🚽 Rửa tay & vệ sinh (+5 Thể lực)', this.playerController.pos.x, this.playerController.pos.y - 25, '#38bdf8');
+        this.notify();
         break;
 
       default:
@@ -576,14 +626,53 @@ export class GameStateManager {
     }
   }
 
-  // Đối thoại với Bác Ba (Bảo Vệ StartUp Tower)
+  // Đối thoại với Bác Ba (Bảo Vệ StartUp Tower & Tòa Nhà Trụ Sở)
   public talkWithSecurityGuard() {
     soundManager.playClick();
     this.showDialog(
-      'Chào CEO trẻ! Tòa StartUp Tower này bao năm qua bác thấy nhiều bạn trẻ khởi nghiệp rồi. Ai kiên trì nhận hợp đồng phần mềm, trả lương nhân viên đúng hạn, không đầu cơ liều lĩnh thì sớm muộn cũng thành kỳ lân! Khi nào công ty cần vốn nhớ sang ngân hàng V-Bank đối diện phố nhé!',
+      'Chào CEO trẻ! Tòa Trụ sở StartUp Co. này hiện đại nhất khu rồi đó. Ai kiên trì nhận hợp đồng phần mềm, trả lương nhân viên đúng hạn, quan tâm đời sống anh em thì sớm muộn cũng thành kỳ lân! Sếp lên các tầng nhớ dùng thang máy thẻ từ nhé!',
       'SECURITY',
-      'Bác Ba (Bảo Vệ Tòa Nhà StartUp Tower)'
+      'Bác Ba (Bảo Vệ Trụ Sở StartUp Co.)'
     );
+  }
+
+  // Đối thoại với Lễ Tân Tòa Nhà
+  public talkWithReceptionist() {
+    soundManager.playClick();
+    this.showDialog(
+      'Em chào Sếp ạ! Hôm nay có 2 đối tác gửi hồ sơ dự án qua bưu phẩm, em đã chuyển vào phòng Hành chính T1 cho Sếp rồi ạ. Sếp lên Tầng 2 (Khu Làm Việc) hoặc Tầng 3 (Khu Giám Đốc) có thể dùng thang máy ở góc sảnh nhé!',
+      'EMPLOYEE',
+      'Em Mai — Lễ Tân StartUp Co.'
+    );
+  }
+
+  // Đối thoại với Quản Lý Kho
+  public talkWithWarehouseClerk() {
+    soundManager.playClick();
+    this.showDialog(
+      'Báo cáo Sếp! Toàn bộ tủ rack máy chủ server, màn hình lập trình viên và linh kiện công nghệ vừa nhập về đều đã được kiểm kê xếp ngay ngắn trên kệ kho. Hệ thống phòng cháy chữa cháy kho hàng hoạt động 100% an toàn!',
+      'EMPLOYEE',
+      'Anh Tuấn — Quản Lý Kho Hàng & Thiết Bị'
+    );
+  }
+
+  // Điều hướng Thang Máy Chọn Tầng
+  public selectElevatorFloor(targetFloor: SceneId) {
+    this.isElevatorModalOpen = false;
+    soundManager.playStandupBell();
+    let spawn = { x: 500, y: 400 };
+    if (targetFloor === 'FLOOR_1') spawn = { x: 840, y: 440 };
+    else if (targetFloor === 'FLOOR_2') spawn = { x: 180, y: 150 };
+    else if (targetFloor === 'FLOOR_3') spawn = { x: 180, y: 150 };
+    else if (targetFloor === 'COMPANY_EXTERIOR') spawn = { x: 550, y: 360 };
+    this.switchScene(targetFloor, spawn);
+    const floorLabel = targetFloor === 'FLOOR_3' ? 'Tầng 3 (Khu Giám Đốc)' : targetFloor === 'FLOOR_2' ? 'Tầng 2 (Khu Làm Việc)' : targetFloor === 'FLOOR_1' ? 'Tầng 1 (Lễ Tân/Kho)' : 'Mặt Tiền Tòa Nhà';
+    this.addFloatingText(`🔔 Thang máy: Đã đến ${floorLabel}`, spawn.x, spawn.y - 30, '#38bdf8');
+  }
+
+  public closeElevatorModal() {
+    this.isElevatorModalOpen = false;
+    this.notify();
   }
 
   // Họp toàn thể công ty (All-Hands Standup Meeting)
@@ -602,7 +691,7 @@ export class GameStateManager {
   }
 
   // Chuyển đổi cảnh (Vào/Ra các tòa nhà)
-  public switchScene(targetSceneId: 'CITY' | 'ROOM' | 'OFFICE' | 'CEO_OFFICE' | 'VILLA' | 'CAFE' | 'BANK' | 'COURT', targetSpawn?: { x: number; y: number }) {
+  public switchScene(targetSceneId: SceneId, targetSpawn?: { x: number; y: number }) {
     this.currentSceneId = targetSceneId;
     this.currentScene = WORLD_MAPS[targetSceneId] || WORLD_MAPS.CITY;
 
@@ -947,9 +1036,11 @@ export class GameStateManager {
     });
 
     // 2. Nhân viên trong văn phòng (Chuẩn hóa vai trò & status thought bubble)
-    if (this.currentSceneId === 'OFFICE') {
+    if (this.currentSceneId === 'OFFICE' || this.currentSceneId === 'FLOOR_2') {
       this.employees.forEach((emp, idx) => {
-        const deskPos = this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length] || { x: 200, y: 250 };
+        const deskPos = (this.currentScene.deskPositions && this.currentScene.deskPositions.length > 0)
+          ? this.currentScene.deskPositions[idx % this.currentScene.deskPositions.length]
+          : { x: 200, y: 250 };
         const posX = emp.currentPos ? emp.currentPos.x : deskPos.x;
         const posY = emp.currentPos ? emp.currentPos.y : deskPos.y;
 
@@ -995,6 +1086,55 @@ export class GameStateManager {
           hasGlasses: emp.role === 'BACKEND' || emp.role === 'TESTER' || jobRole === 'IT',
           speechBubble: emp.speechBubble
         });
+      });
+    }
+
+    // 2b. Nhân viên Tầng 1 (Lễ Tân & Quản Lý Kho)
+    if (this.currentSceneId === 'FLOOR_1') {
+      list.push(
+        {
+          id: 'npc_f1_receptionist',
+          name: 'Em Mai (Lễ Tân)',
+          x: 512,
+          y: 370,
+          direction: 'DOWN',
+          animationState: 'IDLE',
+          roleType: 'EMPLOYEE',
+          jobRole: 'ADMIN',
+          statusIcon: '📋',
+          gender: 'FEMALE',
+          speechBubble: 'StartUp Co. kính chào quý khách!'
+        },
+        {
+          id: 'npc_f1_warehouse_mgr',
+          name: 'Anh Tuấn (Quản Lý Kho)',
+          x: 200,
+          y: 360,
+          direction: 'RIGHT',
+          animationState: 'WORK',
+          roleType: 'EMPLOYEE',
+          jobRole: 'IT',
+          statusIcon: '📦',
+          gender: 'MALE',
+          speechBubble: 'Thiết bị công nghệ đã sẵn sàng'
+        }
+      );
+    }
+
+    // 2c. Bảo vệ Mặt Tiền Tòa Nhà
+    if (this.currentSceneId === 'COMPANY_EXTERIOR') {
+      list.push({
+        id: 'npc_security_guard_ext',
+        name: 'Bác Ba (Bảo Vệ)',
+        x: 380,
+        y: 520,
+        direction: 'DOWN',
+        animationState: 'IDLE',
+        roleType: 'CITIZEN',
+        jobRole: 'SECURITY',
+        statusIcon: '🛡️',
+        gender: 'MALE',
+        speechBubble: 'Trụ sở StartUp Co. xin chào Sếp!'
       });
     }
 

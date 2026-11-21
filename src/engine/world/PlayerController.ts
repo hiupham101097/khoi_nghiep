@@ -2,7 +2,7 @@
 // CEO EMPIRE: PLAYER CONTROLLER (Keyboard, Movement, Collision & Interaction)
 // ============================================================================
 
-import { CharacterDirection, CharacterAnimationState, Position2D } from '../../types';
+import { CharacterDirection, CharacterAnimationState, Position2D, InteractiveDoor } from '../../types';
 import { MapSceneConfig, InteractiveZone, CollisionBox } from './WorldData';
 import { soundManager } from '../core/SoundManager';
 
@@ -125,6 +125,34 @@ export class PlayerController {
 
     const currentSpeed = (this.isRunning ? this.baseSpeed * 1.5 : this.baseSpeed) * deltaTime;
 
+    // Cập nhật cảm biến cửa tự động (AutoSensor: kính sảnh chính, thanh chắn xe)
+    if (currentScene.doors && currentScene.doors.length > 0) {
+      for (const door of currentScene.doors) {
+        if (door.autoSensor) {
+          const doorCenterX = door.x + door.width / 2;
+          const doorCenterY = door.y + door.height / 2;
+          const distToDoor = Math.hypot(this.pos.x - doorCenterX, this.pos.y - doorCenterY);
+
+          if (distToDoor < 75) {
+            door.isOpen = true;
+            door.openAngle = Math.min(1, (door.openAngle ?? 0) + deltaTime * 4);
+          } else if (distToDoor > 95) {
+            door.openAngle = Math.max(0, (door.openAngle ?? 1) - deltaTime * 3);
+            if (door.openAngle <= 0.05) {
+              door.isOpen = false;
+            }
+          }
+        } else {
+          // Cửa thường: chuyển động góc mở mượt mà
+          if (door.isOpen && (door.openAngle ?? 0) < 1) {
+            door.openAngle = Math.min(1, (door.openAngle ?? 0) + deltaTime * 5);
+          } else if (!door.isOpen && (door.openAngle ?? 0) > 0) {
+            door.openAngle = Math.max(0, (door.openAngle ?? 0) - deltaTime * 5);
+          }
+        }
+      }
+    }
+
     if (dx !== 0 || dy !== 0) {
       this.state = 'WALK';
 
@@ -139,14 +167,14 @@ export class PlayerController {
 
       // Kiểm tra va chạm trục X
       const nextX = this.pos.x + dx * currentSpeed;
-      if (!this.checkCollision(nextX, this.pos.y, currentScene.colliders, currentScene.width, currentScene.height)) {
+      if (!this.checkCollision(nextX, this.pos.y, currentScene.colliders, currentScene.width, currentScene.height, currentScene.doors)) {
         this.pos.x = nextX;
         moved = true;
       }
 
       // Kiểm tra va chạm trục Y
       const nextY = this.pos.y + dy * currentSpeed;
-      if (!this.checkCollision(this.pos.x, nextY, currentScene.colliders, currentScene.width, currentScene.height)) {
+      if (!this.checkCollision(this.pos.x, nextY, currentScene.colliders, currentScene.width, currentScene.height, currentScene.doors)) {
         this.pos.y = nextY;
         moved = true;
       }
@@ -192,7 +220,7 @@ export class PlayerController {
   }
 
   // Kiểm tra va chạm hình chữ nhật AABB với nhân vật
-  private checkCollision(newX: number, newY: number, colliders: CollisionBox[], mapWidth: number, mapHeight: number): boolean {
+  private checkCollision(newX: number, newY: number, colliders: CollisionBox[], mapWidth: number, mapHeight: number, doors?: InteractiveDoor[]): boolean {
     const charRadius = 12; // Bán kính va chạm chân nhân vật
 
     // Viền bản đồ
@@ -209,6 +237,23 @@ export class PlayerController {
         return true;
       }
     }
+
+    // Kiểm tra va chạm với các cửa ĐANG ĐÓNG (isOpen === false)
+    if (doors && doors.length > 0) {
+      for (const door of doors) {
+        if (!door.isOpen) {
+          if (
+            newX + charRadius > door.x &&
+            newX - charRadius < door.x + door.width &&
+            newY + charRadius > door.y &&
+            newY - charRadius < door.y + door.height
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+
     return false;
   }
 
@@ -243,10 +288,10 @@ export class PlayerController {
       const nextX = this.pos.x + (dx / dist) * step;
       const nextY = this.pos.y + (dy / dist) * step;
 
-      if (!this.checkCollision(nextX, this.pos.y, currentScene.colliders, currentScene.width, currentScene.height)) {
+      if (!this.checkCollision(nextX, this.pos.y, currentScene.colliders, currentScene.width, currentScene.height, currentScene.doors)) {
         this.pos.x = nextX;
       }
-      if (!this.checkCollision(this.pos.x, nextY, currentScene.colliders, currentScene.width, currentScene.height)) {
+      if (!this.checkCollision(this.pos.x, nextY, currentScene.colliders, currentScene.width, currentScene.height, currentScene.doors)) {
         this.pos.y = nextY;
       }
       this.state = 'WALK';
