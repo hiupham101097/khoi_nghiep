@@ -292,6 +292,34 @@ class SoundManager {
     osc.start(now);
     osc.stop(now + 0.05);
   }
+
+  // Tiếng bíp gõ chữ hội thoại RPG nhẹ nhàng (Typewriter sound effect)
+  public playTextBeep(pitchOffset: number = 0) {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx) return;
+
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const now = this.ctx.currentTime;
+
+      osc.type = 'sine';
+      // Thay đổi cao độ ngẫu nhiên nhẹ để tự nhiên như tiếng nói RPG
+      osc.frequency.setValueAtTime(540 + pitchOffset, now);
+
+      gain.gain.setValueAtTime(0.025, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.032);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.032);
+    } catch {
+      // Audio context may require user interaction first
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

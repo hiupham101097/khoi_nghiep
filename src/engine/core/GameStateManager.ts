@@ -100,6 +100,7 @@ export class GameStateManager {
   public isBankModalOpen: boolean = false;
   public isSaveMenuOpen: boolean = false;
   public selectedEmployeeFor1on1: EmployeeAIEntity | null = null;
+  public activeStoryNodeId: string | null = 'villa_intro_01'; // Nút cốt truyện mở đầu tại Biệt thự
   private aiDecisionTimer: number = 0;
   private workSprintTimer: number = 0;
 
@@ -108,9 +109,17 @@ export class GameStateManager {
 
   constructor() {
     this.timeManager = new TimeManager();
-    this.playerController = new PlayerController({ x: 380, y: 350 });
+    // Bắt đầu game: Nhân vật chính (Thành Nam) xuất hiện ngay cửa chính Biệt Thự hướng lên
+    this.playerController = new PlayerController({ x: 450, y: 480 });
+    this.playerController.dir = 'UP';
+    this.playerController.isLocked = true;
     this.setupTimeHandlers();
     this.initStarterTeamAndProjects();
+  }
+
+  public setStoryNode(nodeId: string | null) {
+    this.activeStoryNodeId = nodeId;
+    this.notify();
   }
 
   public showDialog(
@@ -361,6 +370,23 @@ export class GameStateManager {
 
   // VÒNG LẶP CHÍNH CẬP NHẬT THEO FRAME
   public update(deltaTime: number) {
+    // 0. Cắt cảnh mở đầu 500 triệu: Tự động bước vào vị trí đối thoại trước bàn trà
+    if (this.gamePhase === 'INTRO_CINEMATIC') {
+      const targetY = 390;
+      if (this.playerController.pos.y > targetY) {
+        this.playerController.pos.y = Math.max(targetY, this.playerController.pos.y - 75 * deltaTime);
+        this.playerController.dir = 'UP';
+        this.playerController.state = 'WALK';
+        this.playerController.isLocked = true;
+      } else {
+        this.playerController.pos.y = targetY;
+        this.playerController.state = 'IDLE';
+        this.playerController.dir = 'UP';
+        this.playerController.isLocked = true;
+      }
+      return;
+    }
+
     if (this.gamePhase === 'PLAYING') {
       // 1. Cập nhật thời gian
       this.timeManager.update(deltaTime);
@@ -958,14 +984,20 @@ export class GameStateManager {
   // Lựa chọn A trong Intro 500 triệu
   public chooseIntroOptionA() {
     this.gamePhase = 'INTRO_BRANCH_A';
+    this.activeStoryNodeId = null;
+    this.playerController.isLocked = true;
     soundManager.playDramaticChord();
+    this.decisionLog.push('Cầm 500 triệu và buông tay Lan Anh (Ending Branch A)');
     this.notify();
   }
 
   // Lựa chọn B trong Intro 500 triệu
   public chooseIntroOptionB() {
     this.gamePhase = 'INTRO_BRANCH_B';
+    this.activeStoryNodeId = null;
+    this.playerController.isLocked = true;
     soundManager.playDramaticChord();
+    this.decisionLog.push('Từ chối 500 triệu và tự ái rời đi (Ending Branch B)');
     this.notify();
   }
 
@@ -974,12 +1006,14 @@ export class GameStateManager {
     this.playerStats.cash = 500000000; // Nhận đúng 500 triệu khởi nghiệp!
     this.gamePhase = 'PLAYING';
     this.isRegistered = true;
+    this.activeStoryNodeId = null;
+    this.playerController.isLocked = false;
     this.initStarterTeamAndProjects();
     this.switchScene('ROOM', { x: 300, y: 300 }); // Bắt đầu từ phòng trọ
-    this.decisionLog.push('Cầm 500 triệu đồng và thách thức Bố Lan Anh: Bắt đầu đế chế khởi nghiệp!');
+    this.decisionLog.push('Cầm 500 triệu đồng như khoản đầu tư danh dự: Bắt đầu đế chế khởi nghiệp!');
     soundManager.playSuccess();
     this.showDialog(
-      'Bạn đã cầm trong tay 500.000.000 VNĐ từ Bố Lan Anh!\n\nNhiệm vụ đầu tiên: Rời phòng trọ ra ngoài đường phố, đến Tòa Nhà StartUp Tower giữa phố để chỉ đạo đội ngũ phát triển sản phẩm công nghệ!',
+      'Bạn đã cầm trong tay 500.000.000 VNĐ từ Bố Lan Anh như một khoản đầu tư danh dự!\n\nNhiệm vụ đầu tiên: Rời phòng trọ ra ngoài đường phố, tiến vào Trụ Sở StartUp Co. 3 Tầng để chỉ đạo đội ngũ phát triển sản phẩm công nghệ!',
       'SYSTEM',
       'Chiến Dịch Khởi Nghiệp Bắt Đầu'
     );
@@ -1211,20 +1245,36 @@ export class GameStateManager {
       });
     }
 
-    // 4. Bố Lan Anh ở Biệt thự
+    // 4. Bố Lan Anh & Lan Anh trong Dinh Thự Hoàng Gia (VILLA)
     if (this.currentSceneId === 'VILLA') {
-      list.push({
-        id: 'npc_father',
-        name: 'Ông Vinh (Chủ Tịch)',
-        x: 380,
-        y: 120,
-        direction: 'DOWN',
-        animationState: 'IDLE',
-        roleType: 'FATHER',
-        jobRole: 'FATHER',
-        statusIcon: '🏢',
-        gender: 'MALE'
-      });
+      list.push(
+        {
+          id: 'npc_father',
+          name: 'Ông Hoàng Thế Vinh (Chủ Tịch)',
+          x: 440,
+          y: 240,
+          direction: 'DOWN',
+          animationState: 'IDLE',
+          roleType: 'FATHER',
+          jobRole: 'FATHER',
+          statusIcon: '💼',
+          gender: 'MALE',
+          speechBubble: this.gamePhase === 'INTRO_CINEMATIC' ? '500 triệu mặt đây...' : 'Đừng làm ta thất vọng.'
+        },
+        {
+          id: 'npc_lan_anh',
+          name: 'Hoàng Lan Anh (Bạn Gái)',
+          x: 320,
+          y: 285,
+          direction: 'RIGHT',
+          animationState: 'IDLE',
+          roleType: 'LAN_ANH',
+          jobRole: 'LAN_ANH',
+          statusIcon: '💖',
+          gender: 'FEMALE',
+          speechBubble: this.gamePhase === 'INTRO_CINEMATIC' ? 'Anh Nam...' : 'Em luôn tin anh!'
+        }
+      );
     }
 
     return list;

@@ -419,44 +419,97 @@ export const WORLD_MAPS: Record<string, MapSceneConfig> = {
   VILLA: {
     id: 'VILLA',
     name: 'Biệt Thự Hoàng Gia — Nhà Bố Lan Anh',
-    width: 800,
-    height: 520,
-    defaultSpawn: { x: 380, y: 440 },
+    width: 1024,
+    height: 576,
+    defaultSpawn: { x: 490, y: 480 },
+    floorPlanImage: '/villa_refs/villa_living_room.jpg',
     colliders: [
-      { x: 0, y: 0, width: 800, height: 40 },
-      { x: 0, y: 480, width: 800, height: 40 },
-      { x: 0, y: 0, width: 40, height: 520 },
-      { x: 760, y: 0, width: 40, height: 520 },
+      // Tường bao quanh phòng khách biệt thự
+      { x: 0, y: 0, width: 1024, height: 45 },
+      { x: 0, y: 0, width: 45, height: 576 },
+      { x: 979, y: 0, width: 45, height: 576 },
+      { x: 0, y: 531, width: 430, height: 45 },
+      { x: 570, y: 531, width: 454, height: 45 },
 
-      // Bàn tiếp khách cẩm thạch & Ghế bành chủ tịch
-      { x: 300, y: 150, width: 200, height: 100 },
-      // Đàn piano lớn góc trái
-      { x: 80, y: 70, width: 140, height: 120 },
-      // Tủ rượu ngoại & cổ vật
-      { x: 580, y: 60, width: 150, height: 100 }
+      // Đàn Đại Dương Cầm Grand Piano góc trái
+      { x: 55, y: 215, width: 155, height: 165 },
+
+      // Tủ sách & Lò sưởi cẩm thạch phía Bắc
+      { x: 245, y: 45, width: 85, height: 170 },
+      { x: 345, y: 45, width: 160, height: 160 },
+      { x: 520, y: 45, width: 85, height: 170 },
+
+      // Tượng bán thân & Cầu thang vòm uốn lượn góc phải
+      { x: 645, y: 195, width: 50, height: 75 },
+      { x: 685, y: 45, width: 235, height: 260 },
+
+      // Cụm bàn ghế hoàng gia tiếp khách trung tâm
+      { x: 350, y: 215, width: 175, height: 65 },  // Sofa chính
+      { x: 375, y: 305, width: 130, height: 55 },  // Bàn trà cẩm thạch & Vali 500 triệu
+      { x: 265, y: 265, width: 70, height: 75 },   // Ghế bành bọc da bên trái
+      { x: 535, y: 265, width: 70, height: 75 },   // Ghế bành bọc da bên phải
+      { x: 390, y: 385, width: 100, height: 35 },  // Ghế đôn dài phía dưới
+      { x: 300, y: 230, width: 40, height: 40 },   // Bàn góc đèn bàn trái
+      { x: 520, y: 230, width: 40, height: 40 },   // Bàn góc đèn bàn phải
+
+      // Bệ hoa cửa sổ kính phía dưới
+      { x: 90, y: 490, width: 220, height: 45 },
+      { x: 740, y: 490, width: 220, height: 45 },
+      // Bàn console góc dưới phải
+      { x: 895, y: 345, width: 65, height: 80 }
     ],
     interactiveZones: [
       {
+        id: 'villa_briefcase_500m',
+        name: 'Vali 500 Triệu Đồng',
+        x: 375,
+        y: 305,
+        width: 130,
+        height: 60,
+        prompt: 'Nhấn [E] xem Vali 500.000.000 VNĐ tiền mặt của Ông Vinh',
+        actionType: 'TALK_NPC'
+      },
+      {
+        id: 'villa_father_chair',
+        name: 'Bố Lan Anh (Ông Hoàng Thế Vinh)',
+        x: 420,
+        y: 215,
+        width: 60,
+        height: 60,
+        prompt: 'Nhấn [E] để đối thoại với Bố Lan Anh',
+        actionType: 'TALK_NPC'
+      },
+      {
+        id: 'villa_lan_anh',
+        name: 'Hoàng Lan Anh',
+        x: 310,
+        y: 270,
+        width: 60,
+        height: 60,
+        prompt: 'Nhấn [E] trò chuyện với Lan Anh',
+        actionType: 'TALK_NPC'
+      },
+      {
+        id: 'villa_piano',
+        name: 'Đại Dương Cầm Steinway',
+        x: 80,
+        y: 230,
+        width: 110,
+        height: 80,
+        prompt: 'Nhấn [E] chiêm ngưỡng cây đàn piano bạc tỷ',
+        actionType: 'TALK_NPC'
+      },
+      {
         id: 'villa_door_exit',
         name: 'Cổng Biệt Thự Ra Ngoài',
-        x: 350,
-        y: 460,
-        width: 80,
-        height: 30,
+        x: 430,
+        y: 520,
+        width: 120,
+        height: 45,
         prompt: 'Nhấn [E] để rời Biệt thự',
         actionType: 'ENTER_SCENE',
         targetScene: 'CITY',
         targetSpawn: { x: 920, y: 280 }
-      },
-      {
-        id: 'villa_father_chair',
-        name: 'Bàn Trà Ông Hoàng Thế Vinh',
-        x: 330,
-        y: 160,
-        width: 140,
-        height: 80,
-        prompt: 'Nhấn [E] để đối thoại với Bố Lan Anh',
-        actionType: 'TALK_NPC'
       }
     ],
     deskPositions: []

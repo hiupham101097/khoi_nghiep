@@ -125,6 +125,36 @@ export const HUD: React.FC<HUDProps> = ({
     gsm.notify();
   };
 
+  // Nếu đang trong Cắt Cảnh Mở Đầu 500 triệu (Intro Cinematic RPG)
+  if (gsm.gamePhase === 'INTRO_CINEMATIC') {
+    return (
+      <div className="fixed inset-x-0 top-0 z-40 p-2 sm:p-4 pointer-events-none flex items-center justify-between">
+        <div className="bg-slate-950/90 backdrop-blur-md border border-amber-500/50 rounded-xl px-3 sm:px-4 py-2 flex items-center gap-2.5 shadow-2xl pointer-events-auto">
+          <span className="text-xl">🏰</span>
+          <div>
+            <div className="text-xs sm:text-sm font-extrabold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span>Dinh Thự Hoàng Gia • Vinh Phát Group</span>
+              <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded border border-amber-500/40">20:00</span>
+            </div>
+            <div className="text-[10px] sm:text-xs text-slate-300 font-mono">
+              Chương Mở Đầu: Cuộc Gặp Định Mệnh 500 Triệu Đồng Đổi Lấy Tương Lai
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 pointer-events-auto">
+          <button
+            onClick={toggleMute}
+            className="p-2 sm:p-2.5 bg-slate-900/90 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-700 shadow-lg cursor-pointer transition"
+            title={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
+          >
+            {isMuted ? <VolumeX className="w-4 h-4 text-rose-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="absolute top-0 left-0 right-0 p-2 sm:p-3 pointer-events-none flex flex-col gap-2 z-20">
       {/* Top Bar Card — Responsive Desktop, Tablet & Mobile */}

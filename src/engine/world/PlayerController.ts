@@ -13,6 +13,7 @@ export class PlayerController {
 
   public baseSpeed: number = 175; // Pixels per second
   public isRunning: boolean = false;
+  public isLocked: boolean = false; // Khóa điều khiển người chơi trong cắt cảnh / hội thoại
   
   private keys: Record<string, boolean> = {};
   public nearbyZone: InteractiveZone | null = null;
@@ -77,6 +78,13 @@ export class PlayerController {
   }
 
   public update(deltaTime: number, currentScene: MapSceneConfig, onInteract?: (zone: InteractiveZone) => void) {
+    if (this.isLocked) {
+      if (this.state === 'WALK') {
+        this.state = 'IDLE';
+      }
+      return;
+    }
+
     let dx = 0;
     let dy = 0;
 

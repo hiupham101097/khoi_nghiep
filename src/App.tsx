@@ -19,6 +19,8 @@ import { CollectivePetitionModal } from './ui/CollectivePetitionModal';
 import { DialogModal } from './ui/DialogModal';
 import { ElevatorModal } from './ui/ElevatorModal';
 import { VirtualControls } from './ui/VirtualControls';
+import { RPGDialogueBox } from './ui/RPGDialogueBox';
+import { VILLA_INTRO_STORY } from './engine/narrative/StoryEngine';
 import { ENTERPRISE_STAGES } from './engine/economy/CompanyManager';
 import { soundManager } from './engine/core/SoundManager';
 import { InteractiveZone } from './engine/world/WorldData';
@@ -384,8 +386,32 @@ export const App: React.FC = () => {
         <VirtualControls gsm={gsm} />
       )}
 
-      {/* 1. Kịch bản Mở đầu 500 triệu */}
-      {gsm.gamePhase === 'INTRO_CINEMATIC' && <IntroCinematicModal gsm={gsm} />}
+      {/* 1. Kịch bản Mở đầu 500 triệu (RPG Visual Novel Dialogue) */}
+      {gsm.gamePhase === 'INTRO_CINEMATIC' && gsm.activeStoryNodeId && VILLA_INTRO_STORY[gsm.activeStoryNodeId] && (
+        <RPGDialogueBox
+          gsm={gsm}
+          node={VILLA_INTRO_STORY[gsm.activeStoryNodeId]}
+          onAdvanceNode={(nextNodeId) => {
+            const nextNode = VILLA_INTRO_STORY[nextNodeId];
+            if (nextNode && nextNode.onEnter) {
+              nextNode.onEnter(gsm);
+            }
+            gsm.setStoryNode(nextNodeId);
+          }}
+          onChoiceSelected={(choice) => {
+            if (choice.action) {
+              choice.action(gsm);
+            }
+            if (choice.next) {
+              const nextNode = VILLA_INTRO_STORY[choice.next];
+              if (nextNode && nextNode.onEnter) {
+                nextNode.onEnter(gsm);
+              }
+              gsm.setStoryNode(choice.next);
+            }
+          }}
+        />
+      )}
 
       {/* 2. Cắt cảnh Ending (Ending 07 Ngày Trở Về & các Ending khác) */}
       {(gsm.gamePhase === 'INTRO_BRANCH_A' ||
